@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Light Theme - Using client colors */
+    --background: 220 40% 98%; /* #f5f7fa - very light blue-gray */
+    --background-secondary: 220 40% 95%; /* #e9eef5 - lighter blue-gray */
+    --foreground: 220 40% 18%; /* #1a2233 - deep blue */
+  
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 18%;
+  
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 18%;
+  
+    --primary: 218 48% 28%; /* #234567 - dark blue */
+    --primary-foreground: 220 40% 98%;
+  
+    --secondary: 180 18% 28%; /* #2e4e4e - navy green */
+    --secondary-foreground: 220 40% 98%;
+  
+    --accent: 213 96% 60%; /* #3b82f6 - modern blue accent */
+    --accent-foreground: 220 40% 98%;
+  
+    --muted: 220 30% 92%; /* #e3e8ee - soft gray-blue */
+    --muted-foreground: 220 25% 40%;
+  
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+  
+    --border: 220 20% 85%;
+    --input: 220 20% 85%;
+    --ring: 213 96% 60%;
+  
+    --chart-1: 213 96% 60%;
+    --chart-2: 180 29% 48%;
+    --chart-3: 43 74% 60%;
+    --chart-4: 34 100% 62%;
+    --chart-5: 220 30% 60%;
+  
+    --radius: 0.5rem;
+  
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+  }
+
+  .dark {
+    /* Dark Theme */
+    --background: 220 40% 15%; /* #1a2233 - deep blue, not black */
+    --background-secondary: 220 30% 20%; /* #232e3c - slightly lighter blue */
+    --foreground: 220 40% 98%; /* #f5f7fa - very light blue-gray */
+  
+    --card: 220 30% 18%; /* #232e3c */
+    --card-foreground: 220 40% 98%;
+  
+    --popover: 220 30% 18%;
+    --popover-foreground: 220 40% 98%;
+  
+    --primary: 218 48% 48%; /* #3b5b8a - lighter blue for contrast */
+    --primary-foreground: 220 40% 98%;
+  
+    --secondary: 180 18% 38%; /* #3a5c5c - navy green, lighter for contrast */
+    --secondary-foreground: 220 40% 98%;
+  
+    --accent: 213 96% 70%; /* #60a5fa - light blue accent */
+    --accent-foreground: 220 40% 98%;
+  
+    --muted: 220 20% 28%; /* #2e3a4e - muted blue-gray */
+    --muted-foreground: 220 20% 80%;
+  
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+  
+    --border: 220 20% 30%;
+    --input: 220 20% 30%;
+    --ring: 213 96% 70%;
+  
+    --chart-1: 213 96% 70%;
+    --chart-2: 180 29% 48%;
+    --chart-3: 43 74% 60%;
+    --chart-4: 34 100% 62%;
+    --chart-5: 220 30% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Map your actual colors to Tailwind's color system */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+}
