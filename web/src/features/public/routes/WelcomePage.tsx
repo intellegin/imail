@@ -27,7 +27,7 @@ const WelcomePage = () => {
         </div>
 
         <Card className="shadow-lg">
-          <CardHeader>
+          <CardHeader className="text-center">
             <CardTitle>Get Started</CardTitle>
             <CardDescription>
               Use your Auth0 account to securely sign in to your dashboard.
@@ -46,14 +46,14 @@ const WelcomePage = () => {
                   Please wait
                 </>
               ) : (
-                'Login with Auth0'
+                'Login'
               )}
             </Button>
           </CardContent>
         </Card>
 
         <p className="text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} iMAIL. All Rights Reserved.
+          © {new Date().getFullYear()} INTELLEGIN. All Rights Reserved.
         </p>
       </div>
     </div>

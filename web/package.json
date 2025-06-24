@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --open",
     "build": "tsc -b && vite build",
     "lint:eslint": "eslint --ignore-pattern src/components/ui/** \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "pnpm run lint:eslint --fix",

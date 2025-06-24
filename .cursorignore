@@ -1,0 +1,8 @@
+# Ignore heavy or irrelevant directories/files from Cursor context
+node_modules/
+web/node_modules/
+web/dist/
+web/dist-ssr/
+.idea/
+.vscode/
+.DS_Store 
