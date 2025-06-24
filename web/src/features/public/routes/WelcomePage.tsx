@@ -19,7 +19,7 @@ const WelcomePage = () => {
         <div className="text-center">
           <Inbox className="mx-auto h-12 w-auto text-primary" />
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Welcome to IMAILAPP
+            Welcome to iMAIL
           </h1>
           <p className="mt-2 text-lg text-muted-foreground">
             Your secure and modern experience.
@@ -53,7 +53,7 @@ const WelcomePage = () => {
         </Card>
 
         <p className="text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} IMAILAPP. All Rights Reserved.
+          © {new Date().getFullYear()} iMAIL. All Rights Reserved.
         </p>
       </div>
     </div>

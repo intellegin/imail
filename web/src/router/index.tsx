@@ -15,6 +15,7 @@ const SettingsPage = lazy(
 )
 const WelcomePage = lazy(() => import('@/features/public/routes/WelcomePage'))
 const NotFoundPage = lazy(() => import('@/features/public/routes/NotFoundPage'))
+const InboxPage = lazy(() => import('@/features/inbox/routes/InboxPage'))
 
 const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<LoadingScreen className="h-48 w-48" />}>
@@ -71,6 +72,16 @@ export const AppRoutes = () => {
             <PrivateWrapper header="Help">
               <SuspenseWrapper>
                 <HelpPage />
+              </SuspenseWrapper>
+            </PrivateWrapper>
+          }
+        />
+        <Route
+          path="/inbox"
+          element={
+            <PrivateWrapper>
+              <SuspenseWrapper>
+                <InboxPage />
               </SuspenseWrapper>
             </PrivateWrapper>
           }
