@@ -1,4 +1,3 @@
-import { useAuth0 } from '@auth0/auth0-react'
 import { ChevronLeft, Menu, ChevronRight } from 'lucide-react'
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
@@ -16,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useAuth } from '@/contexts/AuthContext'
 import { useNavigationNotificationCount } from '@/contexts/NavigationNotificationCountContext'
 import { useMediaQuery } from '@/hooks'
 import {
@@ -23,7 +23,7 @@ import {
   secondaryNavigation,
   categoryNavigation,
 } from '@/lib/navigation'
-import { cn, clearStorage } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 interface PrivateWrapperProps {
   children: React.ReactNode
@@ -37,14 +37,10 @@ const DesktopSidebar = ({
   isCollapsed: boolean
   onToggle: () => void
 }) => {
-  const { logout } = useAuth0()
   const location = useLocation()
   const notificationCounts = useNavigationNotificationCount()
 
-  const handleLogout = () => {
-    clearStorage()
-    logout({ logoutParams: { returnTo: window.location.origin } })
-  }
+  const { logout } = useAuth()
 
   return (
     <aside
@@ -73,7 +69,6 @@ const DesktopSidebar = ({
             </TooltipContent>
           </Tooltip>
         </header>
-        {/* Side resize/collapse button */}
         <button
           type="button"
           onClick={onToggle}
@@ -191,7 +186,7 @@ const DesktopSidebar = ({
                         'hover:bg-destructive/10 hover:text-destructive',
                         isCollapsed ? 'justify-center' : 'px-4'
                       )}
-                      onClick={handleLogout}
+                      onClick={logout}
                     >
                       <span className="flex items-center gap-2 px-2">
                         <Icon className="h-5 w-5" />
@@ -238,13 +233,8 @@ const DesktopSidebar = ({
 }
 
 const MobileTopBar = () => {
-  const { logout } = useAuth0()
   const notificationCounts = useNavigationNotificationCount()
-
-  const handleLogout = () => {
-    clearStorage()
-    logout({ logoutParams: { returnTo: window.location.origin + '/' } })
-  }
+  const { logout } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-center px-0 py-2 bg-card border-b relative h-14">
@@ -303,7 +293,7 @@ const MobileTopBar = () => {
               item.name.toLowerCase() === 'logout' ? (
                 <DropdownMenuItem
                   key={item.name}
-                  onClick={handleLogout}
+                  onClick={logout}
                   className="text-destructive focus:bg-destructive/10"
                 >
                   <item.icon className="mr-2 h-4 w-4" />

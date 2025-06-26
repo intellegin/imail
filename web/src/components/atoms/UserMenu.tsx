@@ -1,24 +1,56 @@
-import { useAuth0 } from '@auth0/auth0-react'
+import { LogOut, Settings, User } from 'lucide-react'
 
-import { Button } from '../ui/button'
-
-import { clearStorage } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useAuth } from '@/contexts/AuthContext'
 
 export const UserMenu = () => {
-  const { user, logout } = useAuth0()
+  const { logout, user } = useAuth()
 
-  const handleLogout = () => {
-    clearStorage()
-    logout({ logoutParams: { returnTo: window.location.origin } })
+  const handleSettings = () => {
+    window.location.href = '/settings'
   }
 
-  if (!user) return null
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm">{user.name}</span>
-      <Button variant="outline" size="sm" onClick={handleLogout}>
-        Logout
-      </Button>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="relative h-8 w-8 rounded-full"
+        >
+          <User className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">
+              {user?.name || 'User'}
+            </p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user?.email || 'user@example.com'}
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSettings}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Settings</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={logout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

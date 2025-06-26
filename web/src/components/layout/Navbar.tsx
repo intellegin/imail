@@ -1,34 +1,17 @@
-import { useAuth0 } from '@auth0/auth0-react'
-import { Link } from 'react-router-dom'
-
-import { UserMenu } from '@/components/atoms/UserMenu'
-import { Button } from '@/components/ui/button'
+import { UserMenu } from '@/components/atoms'
 
 export const Navbar = () => {
-  const { isAuthenticated } = useAuth0()
-
   return (
-    <nav className="flex items-center justify-between px-4 py-2 border-b bg-background">
-      <div className="flex items-center gap-4">
-        <Link to="/" className="font-bold text-lg">
-          iMAIL
-        </Link>
-        {isAuthenticated && (
-          <>
-            <Link to="/">Dashboard</Link>
-            <Link to="/settings">Settings</Link>
-            <Link to="/help">Help</Link>
-          </>
-        )}
-      </div>
-      <div className="flex items-center gap-2">
-        {isAuthenticated ? (
-          <UserMenu />
-        ) : (
-          <Button asChild variant="default" size="sm">
-            <Link to="/login">Login</Link>
-          </Button>
-        )}
+    <nav className="border-b bg-background">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 justify-between">
+          <div className="flex items-center">
+            <h1 className="text-xl font-semibold">iMAIL</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <UserMenu />
+          </div>
+        </div>
       </div>
     </nav>
   )
