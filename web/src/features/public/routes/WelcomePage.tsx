@@ -1,7 +1,8 @@
-import { useAuth0 } from '@auth0/auth0-react'
-import { Inbox, Loader2 } from 'lucide-react'
+import { Inbox } from 'lucide-react'
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import { Button } from '@/components/ui/button'
+import { LoginButton } from '@/components/atoms'
 import {
   Card,
   CardContent,
@@ -9,10 +10,25 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { useAuth } from '@/contexts/AuthContext'
 
 const WelcomePage = () => {
-  const { loginWithRedirect, isLoading } = useAuth0()
+  const { isAuthenticated, isLoading } = useAuth()
+  const navigate = useNavigate()
 
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, isLoading, navigate])
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-6">
@@ -30,25 +46,13 @@ const WelcomePage = () => {
           <CardHeader>
             <CardTitle>Get Started</CardTitle>
             <CardDescription>
-              Use your Auth0 account to securely sign in to your dashboard.
+              Sign in to access your dashboard securely.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
-              onClick={() => loginWithRedirect()}
-              disabled={isLoading}
-              className="w-full"
-              size="lg"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Please wait
-                </>
-              ) : (
-                'Login with Auth0'
-              )}
-            </Button>
+            <LoginButton className="w-full" size="lg">
+              Sign In with Auth0
+            </LoginButton>
           </CardContent>
         </Card>
 

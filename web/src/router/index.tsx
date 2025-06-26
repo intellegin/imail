@@ -1,10 +1,9 @@
 import React, { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
-import { ProtectedRoute } from './ProtectedRoute'
-
 import { LoadingScreen } from '@/components/atoms'
 import PrivateWrapper from '@/components/layout/PrivateWrapper'
+import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 
 const DashboardPage = lazy(
   () => import('@/features/dashboard/routes/DashboardPage')
@@ -27,67 +26,73 @@ export const AppRoutes = () => {
   return (
     <Routes>
       <Route
-        path="/"
+        path="/welcome"
         element={
           <SuspenseWrapper>
             <WelcomePage />
           </SuspenseWrapper>
         }
       />
-      {/* Protected Routes */}
-      <Route element={<ProtectedRoute />}>
-        <Route
-          path="/"
-          element={
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <PrivateWrapper header="Dashboard">
+              <SuspenseWrapper>
+                <DashboardPage />
+              </SuspenseWrapper>
+            </PrivateWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
             <PrivateWrapper header="Users">
               <SuspenseWrapper>
                 <DashboardPage />
               </SuspenseWrapper>
             </PrivateWrapper>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateWrapper header="Users">
-              <SuspenseWrapper>
-                <DashboardPage />
-              </SuspenseWrapper>
-            </PrivateWrapper>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
             <PrivateWrapper header="Settings">
               <SuspenseWrapper>
                 <SettingsPage />
               </SuspenseWrapper>
             </PrivateWrapper>
-          }
-        />
-        <Route
-          path="/help"
-          element={
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/help"
+        element={
+          <ProtectedRoute>
             <PrivateWrapper header="Help">
               <SuspenseWrapper>
                 <HelpPage />
               </SuspenseWrapper>
             </PrivateWrapper>
-          }
-        />
-        <Route
-          path="/inbox"
-          element={
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inbox"
+        element={
+          <ProtectedRoute>
             <PrivateWrapper>
               <SuspenseWrapper>
                 <InboxPage />
               </SuspenseWrapper>
             </PrivateWrapper>
-          }
-        />
-      </Route>
-      {/* 404 Catch-all route */}
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="*"
         element={

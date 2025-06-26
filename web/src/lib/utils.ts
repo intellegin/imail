@@ -27,6 +27,4 @@ export const clearStorage = () => {
       })
     })
   }
-
-  console.log('All browser storage cleared')
 }

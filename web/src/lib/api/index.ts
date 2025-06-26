@@ -10,5 +10,7 @@ export { usersApi } from './users'
 export { apiRequest, API_BASE_URL } from './client'
 
 // Legacy export for backward compatibility
+// import { apiRequest } from './client'
 import { usersApi } from './users'
+
 export const api = usersApi

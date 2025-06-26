@@ -6,12 +6,20 @@ if (!API_BASE_URL) {
 
 export const apiRequest = async <T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
+  accessToken?: string
 ): Promise<T> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`
+  }
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
+    credentials: 'include',
     ...options,
   })
 
