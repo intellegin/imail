@@ -1,9 +1,11 @@
 # Dependencies
 /node_modules
+/server/node_modules
 /web/node_modules
 
 # Build artifacts
 /dist
+/server/dist
 /web/dist
 /web/dist-ssr
 
@@ -21,6 +23,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
+# Coverage reports
+/server/coverage
+/web/coverage
 
 # IDE and OS files
 .vscode/*
