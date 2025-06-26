@@ -4,5 +4,7 @@
   "migrations-dir": "src/db/migrations",
   "migrations-table": "pgmigrations",
   "migration-file-language": "sql",
-  "database-url": "postgresql://imail:password@localhost:5432/imail"
+  "database-url": {
+    "ENV": "DATABASE_URL"
+  }
 }
