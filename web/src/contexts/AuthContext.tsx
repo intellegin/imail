@@ -7,10 +7,18 @@ import React, {
   useState,
 } from 'react'
 
+interface AuthUser {
+  name?: string
+  email?: string
+  picture?: string
+  sub?: string
+  [key: string]: unknown
+}
+
 interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
-  user: unknown
+  user: AuthUser | null
   loginWithRedirect: () => void
   logout: () => void
   getAccessTokenSilently: () => Promise<string>

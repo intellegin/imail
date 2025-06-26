@@ -6,11 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint:eslint": "eslint --ignore-pattern src/components/ui/** \"src/**/*.{js,jsx,ts,tsx}\"",
-    "lint:fix": "pnpm run lint:eslint --fix",
+    "lint": "eslint --ignore-pattern src/components/ui/** \"src/**/*.{js,jsx,ts,tsx}\"",
+    "lint:fix": "pnpm run lint --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rm -rf dist build .next"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
