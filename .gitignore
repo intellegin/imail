@@ -35,3 +35,9 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Database files
+packages/db/data/
+*.sql.backup
+*.dump
+*.backup

@@ -29,73 +29,19 @@ export interface PaginationMeta {
 }
 export interface User {
     id: number;
-    firstName: string;
-    lastName: string;
-    maidenName: string;
-    age: number;
-    gender: string;
+    created_at: string;
+    auth0_id: string;
     email: string;
-    phone: string;
-    username: string;
-    password: string;
-    birthDate: string;
-    image: string;
-    bloodGroup: string;
-    height: number;
-    weight: number;
-    eyeColor: string;
-    hair: {
-        color: string;
-        type: string;
-    };
-    ip: string;
-    address: {
-        address: string;
-        city: string;
-        state: string;
-        stateCode: string;
-        postalCode: string;
-        coordinates: {
-            lat: number;
-            lng: number;
-        };
-        country: string;
-    };
-    macAddress: string;
-    university: string;
-    bank: {
-        cardExpire: string;
-        cardNumber: string;
-        cardType: string;
-        currency: string;
-        iban: string;
-    };
-    company: {
-        department: string;
-        name: string;
-        title: string;
-        address: {
-            address: string;
-            city: string;
-            state: string;
-            stateCode: string;
-            postalCode: string;
-            coordinates: {
-                lat: number;
-                lng: number;
-            };
-            country: string;
-        };
-    };
-    ein: string;
-    ssn: string;
-    userAgent: string;
-    crypto: {
-        coin: string;
-        wallet: string;
-        network: string;
-    };
-    role: 'admin' | 'moderator' | 'user';
+    full_name: string | null;
+    given_name: string | null;
+    family_name: string | null;
+    picture_url: string | null;
+    role: string;
+    email_verified: boolean;
+    is_active: boolean;
+    user_metadata: Record<string, any> | null;
+    app_metadata: Record<string, any> | null;
+    updated_at: string;
 }
 export interface AuthUser {
     id: number;
@@ -115,4 +61,31 @@ export interface UpdateUserRequest {
     lastName?: string;
     email?: string;
     role?: User['role'];
+}
+export interface UpsertUserData {
+    auth0_id: string;
+    email: string;
+    full_name?: string | null;
+    given_name?: string | null;
+    family_name?: string | null;
+    picture_url?: string | null;
+    email_verified?: boolean;
+    user_metadata?: Record<string, any> | null;
+    app_metadata?: Record<string, any> | null;
+}
+export interface Database {
+    public: {
+        Tables: {
+            users: {
+                Row: User;
+                Insert: Omit<User, 'id' | 'created_at' | 'updated_at'> & {
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: Partial<Omit<User, 'id' | 'created_at'>> & {
+                    updated_at?: string;
+                };
+            };
+        };
+    };
 }

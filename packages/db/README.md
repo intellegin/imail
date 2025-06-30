@@ -55,6 +55,7 @@ pnpm db:reset
 ## Migration Files
 
 Migration files are located in `./migrations/` and follow the naming convention:
+
 - `001_create_users_table.sql`
 - `002_add_indexes.sql`
 - etc.
@@ -62,6 +63,7 @@ Migration files are located in `./migrations/` and follow the naming convention:
 ## Initial Setup
 
 The `init.sql` file contains:
+
 - Required PostgreSQL extensions (uuid-ossp)
 - Utility functions for migrations (e.g., `update_updated_at_column()`)
 

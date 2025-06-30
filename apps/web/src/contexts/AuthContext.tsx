@@ -7,6 +7,8 @@ import React, {
   useState,
 } from 'react'
 
+import { API_ENDPOINTS } from '@/lib/constants/api'
+
 interface AuthUser {
   name?: string
   email?: string
@@ -20,7 +22,7 @@ interface AuthContextType {
   isLoading: boolean
   user: AuthUser | null
   loginWithRedirect: () => void
-  logout: () => void
+  logout: () => Promise<void>
   getAccessTokenSilently: () => Promise<string>
 }
 
@@ -52,9 +54,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch(`${serverBaseUrl}/api/auth/verify`, {
-          credentials: 'include',
-        })
+        const response = await fetch(
+          `${serverBaseUrl}${API_ENDPOINTS.AUTH.VERIFY}`,
+          {
+            credentials: 'include',
+          }
+        )
         const data = await response.json()
 
         setIsAuthenticated(data.authenticated)
@@ -84,15 +89,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [serverBaseUrl])
 
   const loginWithRedirect = useCallback(() => {
-    window.location.href = `${serverBaseUrl}/login`
+    window.location.href = `${serverBaseUrl}${API_ENDPOINTS.AUTH.LOGIN}`
   }, [serverBaseUrl])
 
-  const logout = useCallback(() => {
-    console.log('🚪 Logging out, clearing localStorage')
+  const logout = useCallback(async () => {
+    try {
+      await fetch(`${serverBaseUrl}${API_ENDPOINTS.AUTH.LOGOUT}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+    } catch (error) {
+      console.error('Failed to update user status on logout:', error)
+    }
+
     localStorage.removeItem('isAuthenticated')
     localStorage.removeItem('user')
     setIsAuthenticated(false)
     setUser(null)
+
     window.location.href = `${serverBaseUrl}/logout`
   }, [serverBaseUrl])
 

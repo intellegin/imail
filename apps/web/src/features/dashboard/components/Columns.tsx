@@ -41,13 +41,13 @@ export const createColumns = (
     enableHiding: false,
   },
   {
-    accessorKey: 'firstName',
+    accessorKey: 'given_name',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="First Name" />
     ),
   },
   {
-    accessorKey: 'lastName',
+    accessorKey: 'family_name',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Last Name" />
     ),

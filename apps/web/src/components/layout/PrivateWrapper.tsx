@@ -42,6 +42,14 @@ const DesktopSidebar = ({
 
   const { logout } = useAuth()
 
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
+
   return (
     <aside
       className={cn(
@@ -186,7 +194,7 @@ const DesktopSidebar = ({
                         'hover:bg-destructive/10 hover:text-destructive',
                         isCollapsed ? 'justify-center' : 'px-4'
                       )}
-                      onClick={logout}
+                      onClick={handleLogout}
                     >
                       <span className="flex items-center gap-2 px-2">
                         <Icon className="h-5 w-5" />
@@ -235,6 +243,14 @@ const DesktopSidebar = ({
 const MobileTopBar = () => {
   const notificationCounts = useNavigationNotificationCount()
   const { logout } = useAuth()
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-center px-0 py-2 bg-card border-b relative h-14">
@@ -293,7 +309,7 @@ const MobileTopBar = () => {
               item.name.toLowerCase() === 'logout' ? (
                 <DropdownMenuItem
                   key={item.name}
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="text-destructive focus:bg-destructive/10"
                 >
                   <item.icon className="mr-2 h-4 w-4" />

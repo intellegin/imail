@@ -39,7 +39,7 @@ When a user logs out:
 // Login (after Auth0 authentication)
 const loginResponse = await fetch('/api/auth/login', {
   method: 'POST',
-  credentials: 'include' // Include cookies for session
+  credentials: 'include', // Include cookies for session
 });
 
 const { user } = await loginResponse.json();
@@ -48,7 +48,7 @@ console.log('User logged in:', user);
 // Logout
 const logoutResponse = await fetch('/api/auth/logout', {
   method: 'POST',
-  credentials: 'include'
+  credentials: 'include',
 });
 
 console.log('User logged out');
@@ -115,11 +115,13 @@ FRONTEND_URL=http://localhost:5173
 ## Getting Started
 
 1. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 2. Set up environment variables:
+
    ```bash
    cp env.example .env
    # Edit .env with your values
@@ -128,6 +130,7 @@ FRONTEND_URL=http://localhost:5173
 3. Set up your Supabase table using the schema above
 
 4. Start development server:
+
    ```bash
    pnpm dev
    ```
@@ -142,4 +145,4 @@ FRONTEND_URL=http://localhost:5173
 - **Email Verification**: Track email verification status from Auth0
 - **Role Management**: Assign roles to users (defaults to 'user')
 
-The system seamlessly handles user data synchronization between Auth0 and your Supabase database, ensuring you always have up-to-date user information while tracking login/logout activity. 
+The system seamlessly handles user data synchronization between Auth0 and your Supabase database, ensuring you always have up-to-date user information while tracking login/logout activity.
