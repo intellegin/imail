@@ -1,12 +1,12 @@
 # Server API
 
-Node.js Express API with TypeScript, Auth0 authentication, and PostgreSQL user management.
+Node.js Express API with TypeScript, Auth0 authentication, and Supabase user management.
 
 ## Features
 
 - **Express.js** with TypeScript
 - **Auth0** OIDC authentication
-- **PostgreSQL** database integration for user management
+- **Supabase** database integration for user management
 - **Automatic user upsert** on login
 - **User status tracking** (active/inactive)
 - **RESTful API** endpoints
@@ -22,7 +22,7 @@ When a user logs in through Auth0:
 1. User authenticates via Auth0
 2. Call `POST /api/auth/login` endpoint
 3. Server extracts user data from Auth0 token
-4. Server upserts user in PostgreSQL with `is_active = true`
+4. Server upserts user in Supabase with `is_active = true`
 5. Returns user data from database
 
 ### User Logout Process
@@ -39,7 +39,7 @@ When a user logs out:
 // Login (after Auth0 authentication)
 const loginResponse = await fetch('/api/auth/login', {
   method: 'POST',
-  credentials: 'include' // Include cookies for session
+  credentials: 'include', // Include cookies for session
 });
 
 const { user } = await loginResponse.json();
@@ -48,13 +48,13 @@ console.log('User logged in:', user);
 // Logout
 const logoutResponse = await fetch('/api/auth/logout', {
   method: 'POST',
-  credentials: 'include'
+  credentials: 'include',
 });
 
 console.log('User logged out');
 ```
 
-## User Schema (PostgreSQL)
+## User Schema (Supabase)
 
 ```sql
 CREATE TABLE users (
@@ -78,8 +78,9 @@ CREATE TABLE users (
 Copy `env.example` to `.env` and fill in your values:
 
 ```bash
-# Database Configuration
-DATABASE_URL=postgresql://postgres:password@localhost:5432/imail
+# Supabase Configuration
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
 
 # Auth0 Configuration
 AUTH0_CLIENT_ID=your-auth0-client-id
@@ -114,19 +115,22 @@ FRONTEND_URL=http://localhost:5173
 ## Getting Started
 
 1. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 2. Set up environment variables:
+
    ```bash
    cp env.example .env
    # Edit .env with your values
    ```
 
-3. Set up your PostgreSQL database using the migration in `packages/db`
+3. Set up your Supabase table using the schema above
 
 4. Start development server:
+
    ```bash
    pnpm dev
    ```
@@ -141,4 +145,4 @@ FRONTEND_URL=http://localhost:5173
 - **Email Verification**: Track email verification status from Auth0
 - **Role Management**: Assign roles to users (defaults to 'user')
 
-The system seamlessly handles user data synchronization between Auth0 and your PostgreSQL database, ensuring you always have up-to-date user information while tracking login/logout activity. 
+The system seamlessly handles user data synchronization between Auth0 and your Supabase database, ensuring you always have up-to-date user information while tracking login/logout activity.

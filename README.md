@@ -1,117 +1,56 @@
 # imail
 
-A modern email management application built with React, TypeScript, and Node.js in a monorepo architecture.
+A modern email management application built with React, TypeScript, and Node.js.
 
-## 🚀 Quick Start
+## Setup
 
 ### Prerequisites
+
 - Node.js 18+ 
 - pnpm 8+
 - PostgreSQL 14+
 
-### Installation & Setup
-1. Clone the repository and install dependencies:
+### Quick Start
+
+1. Clone the repository
+2. Install dependencies:
    ```bash
-   git clone <repository-url>
-   cd imail
    pnpm install
    ```
 
-2. Set up environment variables:
+3. Set up environment variables:
    ```bash
    pnpm run env:setup
    # Edit .env with your actual values
    ```
 
-3. Run database migrations:
-   ```bash
-   pnpm migrate
-   ```
-
 4. Start development servers:
    ```bash
-   pnpm dev
+   pnpm run dev
    ```
+
+## Environment Variables
+
+All environment variables are now consolidated in a single `.env` file at the root level. The file contains:
+
+- **Server variables**: Database, Auth0, Supabase, CORS settings
+- **Web variables**: API URLs (with VITE_ prefix for Vite)
+
+Run `pnpm run env:setup` to copy `.env.example` to `.env`, then fill in your actual values.
+
+## Development
+
+- `pnpm run dev` - Start all development servers
+- `pnpm run build` - Build all packages  
+- `pnpm run lint` - Lint all packages
+- `pnpm run check-types` - Type check all packages
 
 ## 🏗️ Architecture
 
-### Monorepo Structure
-```
-imail/
-├── apps/
-│   ├── server/              # Express.js API with TypeScript
-│   └── web/                 # React frontend with Vite
-├── packages/
-│   ├── shared/              # Shared utilities and types
-│   └── db/                  # Database migrations
-├── package.json             # Root configuration
-├── turbo.json              # Turborepo settings
-└── pnpm-workspace.yaml     # Workspace configuration
-```
+This project is structured as a monorepo containing:
 
-### Technology Stack
-
-**Backend (apps/server)**
-- Node.js + TypeScript
-- Express.js with middleware
-- PostgreSQL with node-pg-migrate
-- Auth0 authentication
-- Row Level Security (RLS)
-
-**Frontend (apps/web)**
-- React 19 + TypeScript
-- Vite build tool
-- React Router v7
-- Tailwind CSS v4
-- Radix UI components
-- React Hook Form + Zod
-
-**Shared Packages**
-- TypeScript type definitions
-- Database connection utilities
-- Common constants and helpers
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Node.js 18+ 
-- pnpm 8+
-- PostgreSQL database
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd imail
-   ```
-
-2. **Install dependencies**
-   ```bash
-   pnpm install
-   ```
-
-3. **Environment Setup**
-   
-   Copy environment files and configure:
-   ```bash
-   cp server/env.example server/.env
-   cp web/env.example web/.env
-   ```
-
-4. **Database Setup**
-   ```bash
-   # Run database migrations
-   pnpm migrate
-   ```
-
-5. **Start development servers**
-   ```bash
-   pnpm dev
-   ```
-
-This will start both the server (port 3000) and web app (port 5173) concurrently.
+- **`server/`** - Node.js Express API with TypeScript and PostgreSQL
+- **`web/`** - React frontend application with Vite and TypeScript
 
 ## 📋 Available Scripts
 

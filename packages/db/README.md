@@ -1,15 +1,15 @@
 # Database Package (@imail/db)
 
-This package manages database migrations for the imail project using `node-pg-migrate` with PostgreSQL databases.
+This package manages database migrations for the imail project using `node-pg-migrate`. It can be used with both local PostgreSQL and Supabase.
 
 ## Configuration
 
-### For Hosted PostgreSQL
+### For Supabase (Recommended)
 
-1. Set up your PostgreSQL database and get your connection string
+1. Set up your Supabase project and get your database connection string
 2. Add the following environment variable:
    ```bash
-   DATABASE_URL=postgresql://postgres:[PASSWORD]@host:port/database
+   SUPABASE_DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:6543/postgres
    ```
 
 ### For Local PostgreSQL
@@ -19,20 +19,14 @@ This package manages database migrations for the imail project using `node-pg-mi
 
 ## Usage
 
-### Running Migrations on Production
+### Running Migrations on Supabase
 
 ```bash
 # Run all pending migrations
-pnpm migrate
+pnpm supabase:migrate
 
 # Rollback the last migration
-pnpm migrate:down
-
-# Rollback multiple migrations
-pnpm migrate:down --count 2
-
-# Rollback to a specific migration
-pnpm migrate:down --to 001
+pnpm supabase:migrate:down
 ```
 
 ### Creating New Migrations
@@ -75,31 +69,12 @@ The `init.sql` file contains:
 
 This file is automatically executed when using Docker Compose for local development.
 
-## Rollback Capabilities
-
-All migrations include rollback functionality using the `-- Down` comment syntax:
-
-```sql
--- Up migration content here
-CREATE TABLE example (...);
-
--- Down
-DROP TABLE IF EXISTS example;
-```
-
-**Important Notes:**
-
-- Rollbacks drop resources in reverse dependency order
-- Always test rollbacks on local environment first
-- Take database backups before production rollbacks
-
 ## Best Practices
 
-1. **Test locally first**: Always test your migrations on local PostgreSQL before running on production
-2. **Backup before migrating**: Take a backup of your production database before running migrations
+1. **Test locally first**: Always test your migrations on local PostgreSQL before running on Supabase
+2. **Backup before migrating**: Take a backup of your Supabase database before running migrations in production
 3. **Use transactions**: Most migrations should be wrapped in transactions for safety
 4. **Keep migrations small**: Create focused migrations that do one thing well
-5. **Test rollbacks**: Verify rollback functionality in development before deploying
 
 ## Structure
 

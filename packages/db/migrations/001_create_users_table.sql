@@ -1,9 +1,9 @@
--- Create users table matching PostgreSQL configuration in public schema
+-- Create users table matching Supabase configuration in public schema
 CREATE TABLE public.users (
   id BIGSERIAL PRIMARY KEY,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  auth0_id TEXT NOT NULL UNIQUE,
-  email TEXT NOT NULL UNIQUE,
+  auth0_id TEXT,
+  email TEXT,
   full_name TEXT,
   picture_url TEXT,
   role TEXT DEFAULT 'user'::TEXT,
@@ -32,4 +32,4 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_users_updated_at 
   BEFORE UPDATE ON public.users
   FOR EACH ROW 
-  EXECUTE FUNCTION update_updated_at_column();
+  EXECUTE FUNCTION update_updated_at_column(); 

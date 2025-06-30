@@ -1,13 +1,7 @@
 {
   "name": "imail",
-  "version": "1.0.0",
-  "description": "iMail - Email management application",
   "private": true,
   "packageManager": "pnpm@10.9.0",
-  "workspaces": [
-    "server",
-    "web"
-  ],
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
@@ -15,23 +9,14 @@
     "start:server": "cd apps/server && node dist/index.js",
     "start:web": "cd apps/web && pnpm start",
     "lint": "turbo lint",
-    "lint:fix": "turbo lint:fix",
-    "format": "turbo format",
-    "format:check": "turbo format:check",
-    "test": "turbo test",
+    "check-types": "turbo check-types",
     "clean": "turbo clean",
-    "migrate": "turbo migrate",
-    "start": "turbo start"
+    "db:start": "docker-compose up postgres -d",
+    "db:stop": "docker-compose down",
+    "db:reset": "docker-compose down -v && pnpm run db:start",
+    "db:migrate": "cd packages/db && pnpm run migrate"
   },
   "devDependencies": {
-    "turbo": "^2.5.4"
-  },
-  "keywords": [
-    "email",
-    "management",
-    "monorepo",
-    "turborepo"
-  ],
-  "author": "",
-  "license": "ISC"
+    "turbo": "^2.4.0"
+  }
 }

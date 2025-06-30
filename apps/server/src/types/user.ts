@@ -1,5 +1,5 @@
 /**
- * User entity interface matching PostgreSQL users table schema
+ * User entity interface matching Supabase users table schema
  */
 export interface User {
   id: number;
@@ -7,8 +7,6 @@ export interface User {
   auth0_id: string;
   email: string;
   full_name: string | null;
-  given_name: string | null;
-  family_name: string | null;
   picture_url: string | null;
   role: string;
   email_verified: boolean;
@@ -25,8 +23,6 @@ export interface UpsertUserData {
   auth0_id: string;
   email: string;
   full_name?: string | null;
-  given_name?: string | null;
-  family_name?: string | null;
   picture_url?: string | null;
   email_verified?: boolean;
   user_metadata?: Record<string, any> | null;
@@ -41,7 +37,8 @@ export interface UpdateUserStatusData {
 }
 
 /**
- * Database schema type for PostgreSQL integration
+ * Database schema type for Supabase integration
+ * This follows the pattern of Supabase's generated types
  */
 export interface Database {
   public: {
@@ -67,8 +64,6 @@ export interface Auth0User {
   sub: string;
   email: string;
   name?: string;
-  given_name?: string;
-  family_name?: string;
   picture?: string;
   email_verified?: boolean;
   user_metadata?: Record<string, any>;

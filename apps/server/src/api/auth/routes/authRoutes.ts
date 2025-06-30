@@ -6,17 +6,17 @@ import { UserService } from '../../user/services/userService';
 
 const router: Router = express.Router();
 
-const extractUserData = (auth0User: Auth0User) => ({
-  auth0_id: auth0User.sub,
-  email: auth0User.email,
-  full_name: auth0User.name ?? null,
-  given_name: auth0User.given_name ?? null,
-  family_name: auth0User.family_name ?? null,
-  picture_url: auth0User.picture ?? null,
-  email_verified: auth0User.email_verified ?? false,
-  user_metadata: auth0User.user_metadata ?? null,
-  app_metadata: auth0User.app_metadata ?? null,
-});
+function extractUserData(auth0User: Auth0User) {
+  return {
+    auth0_id: auth0User.sub,
+    email: auth0User.email,
+    full_name: auth0User.name ?? null,
+    picture_url: auth0User.picture ?? null,
+    email_verified: auth0User.email_verified ?? false,
+    user_metadata: auth0User.user_metadata ?? null,
+    app_metadata: auth0User.app_metadata ?? null,
+  };
+}
 
 /**
  * @swagger
@@ -42,6 +42,8 @@ const extractUserData = (auth0User: Auth0User) => ({
  *         description: Unauthorized - User not authenticated
  */
 router.get('/profile', requiresAuth, (req, res) => {
+  console.log('User:', req.oidc?.user);
+
   res.json({
     message: 'Protected profile endpoint',
     user: req.oidc?.user || null,
@@ -71,13 +73,20 @@ router.get('/verify', async (req, res) => {
   const isAuthenticated = req.oidc?.isAuthenticated() || false;
   const user = req.oidc?.user || null;
 
+  console.log('Authentication status:', isAuthenticated);
+  console.log('User present:', !!user);
+
   if (isAuthenticated && user) {
     try {
       const userData = extractUserData(user as Auth0User);
-      const dbUser = await UserService.upsertUserOnLogin(userData);
-      console.log('User verified and saved to database:', dbUser.id);
+
+      const supabaseUser = await UserService.upsertUserOnLogin(userData);
+      console.log(
+        '✅ User verified and saved/updated in Supabase:',
+        supabaseUser.id
+      );
     } catch (error) {
-      console.error('Failed to save user to database:', error);
+      console.error('❌ Failed to save user to Supabase:', error);
     }
   }
 
@@ -120,9 +129,9 @@ router.post('/logout', async (req, res) => {
   if (user) {
     try {
       await UserService.updateUserStatusOnLogout(user.sub);
-      console.log('User status updated to inactive on logout:', user.sub);
+      console.log('✅ User status updated to inactive on logout:', user.sub);
     } catch (error) {
-      console.error('Failed to update user status on logout:', error);
+      console.error('❌ Failed to update user status on logout:', error);
     }
   }
 
@@ -135,13 +144,13 @@ router.post('/logout', async (req, res) => {
  * @swagger
  * /api/auth/me:
  *   get:
- *     summary: Get current user's full profile from database
+ *     summary: Get current user's full profile from Supabase
  *     tags: [Auth]
  *     security:
  *       - oidc: []
  *     responses:
  *       200:
- *         description: User profile data from database
+ *         description: User profile data from Supabase
  *         content:
  *           application/json:
  *             schema:
@@ -168,9 +177,9 @@ router.get('/me', requiresAuth, async (req, res) => {
   }
 
   try {
-    const dbUser = await UserService.getUserByAuth0Id(user.sub);
+    const supabaseUser = await UserService.getUserByAuth0Id(user.sub);
 
-    if (!dbUser) {
+    if (!supabaseUser) {
       res.status(404).json({
         success: false,
         error: 'User not found in database',
@@ -180,10 +189,10 @@ router.get('/me', requiresAuth, async (req, res) => {
 
     res.json({
       success: true,
-      data: dbUser,
+      data: supabaseUser,
     });
   } catch (error) {
-    console.error('Failed to fetch user profile:', error);
+    console.error('❌ Failed to fetch user profile:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch user profile',

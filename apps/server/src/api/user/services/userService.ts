@@ -1,176 +1,142 @@
-import {
-  User,
-  UpsertUserData,
-  query,
-  queryWithUser,
-  queryAsSystem,
-} from '@imail/shared';
+import { supabase } from '../../../db/supabase';
+import { User, UpsertUserData } from '../../../types/user';
 
 export class UserService {
-  // GET methods
   static async getAllUsers(
     limit: number = 30,
     skip: number = 0
   ): Promise<User[]> {
     try {
-      const result = await query(
-        'SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2',
-        [limit, skip]
-      );
-      return result.rows;
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(skip, skip + limit - 1);
+
+      if (error) {
+        console.error('Supabase error:', error);
+        return [];
+      }
+
+      return data ?? [];
     } catch (err) {
       console.error('getAllUsers error:', err);
       return [];
     }
   }
 
-  static async getUserById(
-    id: number,
-    requestingUserAuth0Id: string
-  ): Promise<User | null> {
-    try {
-      const result = await queryWithUser(
-        requestingUserAuth0Id,
-        'SELECT * FROM users WHERE id = $1',
-        [id]
-      );
-      return result.rows[0] ?? null;
-    } catch (error) {
-      throw new Error(`Failed to fetch user: ${error}`);
+  static async getUserById(id: number): Promise<User | null> {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Failed to fetch user: ${error.message}`);
     }
+
+    return data ?? null;
   }
 
   static async getUserByAuth0Id(auth0_id: string): Promise<User | null> {
-    try {
-      const result = await queryWithUser(
-        auth0_id,
-        'SELECT * FROM users WHERE auth0_id = $1',
-        [auth0_id]
-      );
-      return result.rows[0] ?? null;
-    } catch (error) {
-      throw new Error(`Failed to fetch user: ${error}`);
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('auth0_id', auth0_id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Failed to fetch user: ${error.message}`);
     }
+
+    return data ?? null;
   }
 
-  static async getUserByAuth0IdAsSystem(
-    auth0_id: string
-  ): Promise<User | null> {
-    try {
-      const result = await queryAsSystem(
-        'SELECT * FROM users WHERE auth0_id = $1',
-        [auth0_id]
-      );
-      return result.rows[0] ?? null;
-    } catch (error) {
-      throw new Error(`Failed to fetch user: ${error}`);
+  static async getUserByEmail(email: string): Promise<User | null> {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Failed to fetch user: ${error.message}`);
     }
+
+    return data ?? null;
   }
 
-  static async getUserByEmail(
-    email: string,
-    requestingUserAuth0Id: string
-  ): Promise<User | null> {
-    try {
-      const result = await queryWithUser(
-        requestingUserAuth0Id,
-        'SELECT * FROM users WHERE email = $1',
-        [email]
-      );
-      return result.rows[0] ?? null;
-    } catch (error) {
-      throw new Error(`Failed to fetch user: ${error}`);
-    }
-  }
-
-  // POST methods
   static async upsertUserOnLogin(userData: UpsertUserData): Promise<User> {
-    try {
-      const result = await queryAsSystem(
-        `INSERT INTO users (auth0_id, email, full_name, given_name, family_name, picture_url, email_verified, is_active, role, user_metadata, app_metadata)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, true, 'user', $8, $9)
-         ON CONFLICT (auth0_id) DO UPDATE SET
-           email = EXCLUDED.email,
-           full_name = EXCLUDED.full_name,
-           given_name = EXCLUDED.given_name,
-           family_name = EXCLUDED.family_name,
-           picture_url = EXCLUDED.picture_url,
-           email_verified = EXCLUDED.email_verified,
-           is_active = true,
-           user_metadata = EXCLUDED.user_metadata,
-           app_metadata = EXCLUDED.app_metadata,
-           updated_at = NOW()
-         RETURNING *`,
-        [
-          userData.auth0_id,
-          userData.email,
-          userData.full_name,
-          userData.given_name,
-          userData.family_name,
-          userData.picture_url,
-          userData.email_verified ?? false,
-          userData.user_metadata ?? {},
-          userData.app_metadata ?? {},
-        ]
-      );
-      return result.rows[0];
-    } catch (error) {
-      throw new Error(`Failed to upsert user: ${error}`);
-    }
-  }
+    const { data, error } = await supabase
+      .from('users')
+      .upsert({
+        auth0_id: userData.auth0_id,
+        email: userData.email,
+        full_name: userData.full_name,
+        picture_url: userData.picture_url,
+        email_verified: userData.email_verified ?? false,
+        is_active: true,
+        role: 'user',
+      })
+      .select()
+      .single();
 
-  // PUT methods
-  static async updateUser(
-    id: number,
-    updateData: Partial<UpsertUserData>,
-    requestingUserAuth0Id: string
-  ): Promise<User | null> {
-    try {
-      const fields = Object.keys(updateData)
-        .map((key, index) => `${key} = $${index + 2}`)
-        .join(', ');
-      const values = Object.values(updateData);
-
-      const result = await queryWithUser(
-        requestingUserAuth0Id,
-        `UPDATE users SET ${fields}, updated_at = NOW() WHERE id = $1 RETURNING *`,
-        [id, ...values]
-      );
-      return result.rows[0] ?? null;
-    } catch (error) {
-      throw new Error(`Failed to update user: ${error}`);
+    if (error) {
+      throw new Error(`Failed to upsert user: ${error.message}`);
     }
+
+    return data;
   }
 
   static async updateUserStatusOnLogout(
     auth0_id: string
   ): Promise<User | null> {
-    try {
-      const result = await queryWithUser(
-        auth0_id,
-        'UPDATE users SET is_active = false, updated_at = NOW() WHERE auth0_id = $1 RETURNING *',
-        [auth0_id]
-      );
-      return result.rows[0] ?? null;
-    } catch (error) {
-      throw new Error(`Failed to update user status: ${error}`);
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        is_active: false,
+      })
+      .eq('auth0_id', auth0_id)
+      .select()
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Failed to update user status: ${error.message}`);
     }
+
+    return data ?? null;
   }
 
-  // DELETE methods
-  static async deleteUser(
+  static async updateUser(
     id: number,
-    requestingUserAuth0Id: string
-  ): Promise<boolean> {
-    try {
-      await queryWithUser(
-        requestingUserAuth0Id,
-        'DELETE FROM users WHERE id = $1',
-        [id]
-      );
-      return true;
-    } catch (error) {
-      throw new Error(`Failed to delete user: ${error}`);
+    updateData: Partial<UpsertUserData>
+  ): Promise<User | null> {
+    const updatePayload = {
+      ...updateData,
+    };
+
+    const { data, error } = await supabase
+      .from('users')
+      .update(updatePayload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Failed to update user: ${error.message}`);
     }
+
+    return data ?? null;
+  }
+
+  static async deleteUser(id: number): Promise<boolean> {
+    const { error } = await supabase.from('users').delete().eq('id', id);
+
+    if (error) {
+      throw new Error(`Failed to delete user: ${error.message}`);
+    }
+
+    return true;
   }
 }
