@@ -5,6 +5,9 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "start": "cd apps/server && node dist/index.js",
+    "start:server": "cd apps/server && node dist/index.js",
+    "start:web": "cd apps/web && pnpm start",
     "lint": "turbo lint",
     "check-types": "turbo check-types",
     "clean": "turbo clean",

@@ -32,67 +32,60 @@ export const getAllUsers: RequestHandler = asyncHandler(
 export const getUserById: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
+    const requestingUser = req.oidc?.user;
+
+    if (!requestingUser) {
+      res.status(401).json({ success: false, error: 'User not authenticated' });
+      return;
+    }
 
     if (!id) {
-      res.status(400).json({
-        success: false,
-        error: 'User ID is required',
-      });
+      res.status(400).json({ success: false, error: 'User ID is required' });
       return;
     }
 
     const userId = parseInt(id, 10);
     if (isNaN(userId)) {
-      res.status(400).json({
-        success: false,
-        error: 'User ID must be a valid number',
-      });
+      res
+        .status(400)
+        .json({ success: false, error: 'User ID must be a valid number' });
       return;
     }
 
-    const user = await UserService.getUserById(userId);
+    const user = await UserService.getUserById(userId, requestingUser.sub);
 
     if (!user) {
-      res.status(404).json({
-        success: false,
-        error: 'User not found',
-      });
+      res.status(404).json({ success: false, error: 'User not found' });
       return;
     }
 
-    res.json({
-      success: true,
-      data: user,
-    });
+    res.json({ success: true, data: user });
   }
 );
 
 export const getUserByAuth0Id: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { auth0_id } = req.params;
+    const requestingUser = req.oidc?.user;
+
+    if (!requestingUser) {
+      res.status(401).json({ success: false, error: 'User not authenticated' });
+      return;
+    }
 
     if (!auth0_id) {
-      res.status(400).json({
-        success: false,
-        error: 'Auth0 ID is required',
-      });
+      res.status(400).json({ success: false, error: 'Auth0 ID is required' });
       return;
     }
 
     const user = await UserService.getUserByAuth0Id(auth0_id);
 
     if (!user) {
-      res.status(404).json({
-        success: false,
-        error: 'User not found',
-      });
+      res.status(404).json({ success: false, error: 'User not found' });
       return;
     }
 
-    res.json({
-      success: true,
-      data: user,
-    });
+    res.json({ success: true, data: user });
   }
 );
 
@@ -102,6 +95,8 @@ export const createUser: RequestHandler = asyncHandler(
       auth0_id,
       email,
       full_name,
+      given_name,
+      family_name,
       picture_url,
       email_verified,
       user_metadata,
@@ -116,7 +111,7 @@ export const createUser: RequestHandler = asyncHandler(
       return;
     }
 
-    const existingUser = await UserService.getUserByAuth0Id(auth0_id);
+    const existingUser = await UserService.getUserByAuth0IdAsSystem(auth0_id);
     if (existingUser) {
       res.status(409).json({
         success: false,
@@ -129,6 +124,8 @@ export const createUser: RequestHandler = asyncHandler(
       auth0_id,
       email,
       full_name,
+      given_name,
+      family_name,
       picture_url,
       email_verified,
       user_metadata,
@@ -148,85 +145,83 @@ export const updateUser: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     const updateData = req.body;
+    const requestingUser = req.oidc?.user;
+
+    if (!requestingUser) {
+      res.status(401).json({ success: false, error: 'User not authenticated' });
+      return;
+    }
 
     if (!id) {
-      res.status(400).json({
-        success: false,
-        error: 'User ID is required',
-      });
+      res.status(400).json({ success: false, error: 'User ID is required' });
       return;
     }
 
     const userId = parseInt(id, 10);
     if (isNaN(userId)) {
-      res.status(400).json({
-        success: false,
-        error: 'User ID must be a valid number',
-      });
+      res
+        .status(400)
+        .json({ success: false, error: 'User ID must be a valid number' });
       return;
     }
 
-    const user = await UserService.getUserById(userId);
+    const user = await UserService.getUserById(userId, requestingUser.sub);
     if (!user) {
-      res.status(404).json({
-        success: false,
-        error: 'User not found',
-      });
+      res.status(404).json({ success: false, error: 'User not found' });
       return;
     }
 
-    const updatedUser = await UserService.updateUser(userId, updateData);
+    const updatedUser = await UserService.updateUser(
+      userId,
+      updateData,
+      requestingUser.sub
+    );
 
-    res.json({
-      success: true,
-      data: updatedUser,
-    });
+    res.json({ success: true, data: updatedUser });
   }
 );
 
 export const deleteUser: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
+    const requestingUser = req.oidc?.user;
+
+    if (!requestingUser) {
+      res.status(401).json({ success: false, error: 'User not authenticated' });
+      return;
+    }
 
     if (!id) {
-      res.status(400).json({
-        success: false,
-        error: 'User ID is required',
-      });
+      res.status(400).json({ success: false, error: 'User ID is required' });
       return;
     }
 
     const userId = parseInt(id, 10);
     if (isNaN(userId)) {
-      res.status(400).json({
-        success: false,
-        error: 'User ID must be a valid number',
-      });
+      res
+        .status(400)
+        .json({ success: false, error: 'User ID must be a valid number' });
       return;
     }
 
-    const user = await UserService.getUserById(userId);
+    const user = await UserService.getUserById(userId, requestingUser.sub);
     if (!user) {
-      res.status(404).json({
-        success: false,
-        error: 'User not found',
-      });
+      res.status(404).json({ success: false, error: 'User not found' });
       return;
     }
 
-    const deleted = await UserService.deleteUser(userId);
+    const success = await UserService.deleteUser(userId, requestingUser.sub);
 
-    if (!deleted) {
+    if (success) {
+      res.json({
+        success: true,
+        message: 'User deleted successfully',
+      });
+    } else {
       res.status(500).json({
         success: false,
         error: 'Failed to delete user',
       });
-      return;
     }
-
-    res.json({
-      success: true,
-      message: 'User deleted successfully',
-    });
   }
 );

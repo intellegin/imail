@@ -57,7 +57,7 @@ const DashboardPage = () => {
     }
 
     fetchUsers()
-  }, [])
+  }, [authenticatedApiRequest])
 
   const handleDeleteUser = async (user: User) => {
     setUserToDelete(user)
@@ -71,7 +71,7 @@ const DashboardPage = () => {
       await api.deleteUser(userToDelete.id)
       setUsers(prev => prev.filter(u => u.id !== userToDelete.id))
       toast.success(
-        `User ${userToDelete.firstName} ${userToDelete.lastName} deleted successfully`
+        `User ${userToDelete.given_name} ${userToDelete.family_name} deleted successfully`
       )
     } catch (err) {
       const errorMessage =
@@ -83,15 +83,13 @@ const DashboardPage = () => {
     }
   }
 
-  // Handle edit user
   const handleEditUser = (user: User) => {
-    toast.info(`Editing user: ${user.firstName} ${user.lastName}`, {
+    toast.info(`Editing user: ${user.given_name} ${user.family_name}`, {
       description: `User ID: ${user.id}`,
       duration: 3000,
     })
   }
 
-  // Handle add user
   const handleAddUser = async (userData: CreateUserData) => {
     setIsCreating(true)
     try {
@@ -174,7 +172,7 @@ const DashboardPage = () => {
             <DataTable
               columns={columns}
               data={users}
-              filterColumn="firstName"
+              filterColumn="given_name"
               tableName="User"
             />
           )}
@@ -188,7 +186,7 @@ const DashboardPage = () => {
             <DialogDescription>
               Are you sure you want to delete{' '}
               <strong>
-                {userToDelete?.firstName} {userToDelete?.lastName}
+                {userToDelete?.given_name} {userToDelete?.family_name}
               </strong>
               ? This action cannot be undone.
             </DialogDescription>
