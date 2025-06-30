@@ -179,29 +179,57 @@ For web:
 pnpm --filter web add <package-name>
 ```
 
-### Running Individual Tasks
+### Best Practices
+- Use TypeScript strict mode
+- Follow REST API conventions
+- Implement proper error handling
+- Write clean, readable code
+- Use meaningful variable names
+- Keep functions focused and small
+
+## 🚂 Railway Deployment
+
+Deploy the backend to Railway with ease:
+
+### Prerequisites
+- Railway account ([sign up here](https://railway.app))
+- GitHub repository connected to Railway
+
+### Quick Deploy
+1. **Connect Repository**: Link your GitHub repository to Railway
+2. **Add Environment Variables**: Set required environment variables in Railway dashboard
+3. **Deploy**: Railway will automatically build and deploy using the included configuration
+
+### Required Environment Variables
 ```bash
-# Build only server
-turbo build --filter=server
+# Database
+DATABASE_URL=postgresql://user:password@host:port/database
 
-# Lint only web
-turbo lint --filter=web
+# Auth0
+AUTH0_CLIENT_ID=your_auth0_client_id
+AUTH0_ISSUER_BASE_URL=https://your-tenant.auth0.com
+AUTH0_CLIENT_SECRET=your_auth0_client_secret
 
-# Run with dependencies
-turbo build --filter=web...
+# Session & Security
+SESSION_SECRET=your_super_secret_session_key
+
+# CORS & URLs
+CORS_ORIGIN=https://your-frontend-domain.com
+FRONTEND_URL=https://your-frontend-domain.com
+BASE_URL=https://your-api-domain.railway.app
 ```
 
-## 📈 Turborepo Features
+### Railway PostgreSQL Service
+Railway provides managed PostgreSQL. To use it:
+1. Add a PostgreSQL service to your Railway project
+2. Railway automatically sets `DATABASE_URL` environment variable
+3. No additional database configuration needed
 
-- **Fast Builds**: Intelligent caching and parallelization
-- **Remote Caching**: Share build cache across team (configurable)
-- **Dependency Graphs**: Automatic task orchestration
-- **Hot Reloading**: Efficient development experience
+### Deployment Configuration
+- **Build**: Uses Turbo to build the server and shared packages
+- **Health Check**: Endpoint at `/api/health` for deployment monitoring
+- **Auto Restart**: Configured to restart on failure with retry limits
+- **Watch Patterns**: Monitors changes in server, shared, and db packages
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting: `pnpm lint && pnpm build`
-5. Submit a pull request
+### Custom Configuration
+The project includes both `railway.json` and `nixpacks.toml` for deployment configuration. Railway will automatically detect and use these files.

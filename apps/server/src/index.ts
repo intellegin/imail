@@ -86,6 +86,15 @@ app.get('/callback', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
+// Health check endpoint for Railway
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  })
+})
+
 if (NODE_ENV === 'development') {
   swaggerConfig(app, PORT);
 }

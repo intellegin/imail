@@ -1,0 +1,15 @@
+[phases.setup]
+nixPkgs = ["nodejs_18", "pnpm"]
+
+[phases.install]
+cmd = "pnpm install --frozen-lockfile"
+
+[phases.build]
+cmd = "pnpm turbo build --filter=server"
+
+[start]
+cmd = "cd apps/server && node dist/index.js"
+
+[variables]
+NODE_ENV = "production"
+PORT = "3000" 
