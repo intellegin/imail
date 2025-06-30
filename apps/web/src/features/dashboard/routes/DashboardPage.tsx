@@ -57,7 +57,7 @@ const DashboardPage = () => {
     }
 
     fetchUsers()
-  }, [])
+  }, [authenticatedApiRequest])
 
   const handleDeleteUser = async (user: User) => {
     setUserToDelete(user)
