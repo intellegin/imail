@@ -11,6 +11,8 @@ function extractUserData(auth0User: Auth0User) {
     auth0_id: auth0User.sub,
     email: auth0User.email,
     full_name: auth0User.name ?? null,
+    given_name: auth0User.given_name ?? null,
+    family_name: auth0User.family_name ?? null,
     picture_url: auth0User.picture ?? null,
     email_verified: auth0User.email_verified ?? false,
     user_metadata: auth0User.user_metadata ?? null,
