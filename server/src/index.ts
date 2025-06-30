@@ -1,23 +1,18 @@
-import path from 'path';
-
-import dotenv from 'dotenv';
+import { checkDatabaseConnection, config } from '@imail/shared';
 import express from 'express';
 import morgan from 'morgan';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
-import authRouter from './api/auth/routes/authRoutes';
-import usersRouter from './api/users/routes/userRoutes';
-import { checkDatabaseConnection } from './db';
+import authRoutes from './api/auth/routes/authRoutes';
+import userRoutes from './api/user/routes/userRoutes';
 import { authMiddleware } from './middleware/auth';
 import { corsMiddleware } from './middleware/cors';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
-dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT ?? 3000;
-const NODE_ENV = process.env.NODE_ENV ?? 'development';
+const PORT = Number(config.server.port);
+const NODE_ENV = config.server.nodeEnv;
 const FRONTEND_URL = process.env.FRONTEND_URL ?? '';
 
 app.use(NODE_ENV === 'production' ? morgan('combined') : morgan('dev'));

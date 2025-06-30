@@ -70,3 +70,4 @@ export const closePool = async (): Promise<void> => {
 };
 
 export default pool;
+

@@ -11,6 +11,9 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "start": "cd apps/server && node dist/index.js",
+    "start:server": "cd apps/server && node dist/index.js",
+    "start:web": "cd apps/web && pnpm start",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",
     "format": "turbo format",
