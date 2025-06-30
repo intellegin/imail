@@ -1,20 +1,19 @@
 {
   "name": "imail",
   "private": true,
+  "packageManager": "pnpm@10.9.0",
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "check-types": "turbo check-types",
+    "clean": "turbo clean",
+    "db:start": "docker-compose up postgres -d",
+    "db:stop": "docker-compose down",
+    "db:reset": "docker-compose down -v && pnpm run db:start",
+    "db:migrate": "cd packages/db && pnpm run migrate"
   },
   "devDependencies": {
-    "prettier": "^3.6.0",
-    "turbo": "^2.5.4",
-    "typescript": "5.8.2"
-  },
-  "packageManager": "pnpm@9.0.0",
-  "engines": {
-    "node": ">=18"
+    "turbo": "^2.4.0"
   }
 }

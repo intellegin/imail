@@ -1,0 +1,19 @@
+{
+  "name": "@imail/db",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Database configuration and migrations for imail",
+  "scripts": {
+    "migrate": "node-pg-migrate up --config-file ./pg-migrate.config.json",
+    "migrate:down": "node-pg-migrate down --config-file ./pg-migrate.config.json",
+    "migrate:create": "node-pg-migrate create --config-file ./pg-migrate.config.json",
+    "supabase:migrate": "node-pg-migrate up --config-file ./pg-migrate.config.json",
+    "supabase:migrate:down": "node-pg-migrate down --config-file ./pg-migrate.config.json",
+    "db:start": "docker-compose -f ../../docker-compose.yml up postgres -d",
+    "db:stop": "docker-compose -f ../../docker-compose.yml down",
+    "db:reset": "docker-compose -f ../../docker-compose.yml down -v && npm run db:start"
+  },
+  "devDependencies": {
+    "node-pg-migrate": "^8.0.3"
+  }
+}
