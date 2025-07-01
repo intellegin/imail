@@ -94,6 +94,7 @@ if (!hasValidAuth0Config) {
     authorizationParams: {
       scope: 'openid profile email',
     },
+    attemptSilentLogin: false,
   };
 
   console.log('✅ Auth0 configured:', effectiveBaseURL);

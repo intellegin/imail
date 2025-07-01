@@ -14,6 +14,7 @@ import { swaggerConfig } from './utils/swagger';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT) || 3000;
 const NODE_ENV = process.env.NODE_ENV ?? 'development';
 const FRONTEND_URL = process.env.FRONTEND_URL ?? '';
@@ -106,8 +107,8 @@ app.all('/callback', (req, res) => {
       emailVerified: user.email_verified,
     });
 
-    console.log('Response headers being set:', res.getHeaders());
     console.log('Set-Cookie headers:', res.get('Set-Cookie'));
+    console.log('Session ID after auth:', (req as any).sessionID);
     console.log('Redirecting authenticated user to frontend');
 
     const frontendUrl = getEffectiveFrontendURL();

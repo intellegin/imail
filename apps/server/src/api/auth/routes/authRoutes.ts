@@ -75,25 +75,12 @@ router.get('/verify', async (req, res) => {
   const isAuthenticated = req.oidc?.isAuthenticated() || false;
   const user = req.oidc?.user || null;
 
-  console.log('=== Auth Verification Debug ===');
-  console.log('Authentication status:', isAuthenticated);
-  console.log('User present:', !!user);
-  console.log('Session ID:', (req as any).sessionID || 'N/A');
-  console.log('Cookies received:', Object.keys(req.cookies || {}));
-  console.log('Headers origin:', req.get('origin'));
-  console.log('Headers referer:', req.get('referer'));
-
   if (isAuthenticated && user) {
     try {
       const userData = extractUserData(user as Auth0User);
-
-      const supabaseUser = await UserService.upsertUserOnLogin(userData);
-      console.log(
-        '✅ User verified and saved/updated in Supabase:',
-        supabaseUser.id
-      );
+      await UserService.upsertUserOnLogin(userData);
     } catch (error) {
-      console.error('❌ Failed to save user to Supabase:', error);
+      console.error('Failed to save user to Supabase:', error);
     }
   }
 
