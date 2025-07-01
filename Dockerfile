@@ -5,15 +5,15 @@ RUN npm install -g pnpm@10.9.0
 FROM base AS builder
 WORKDIR /app
 
-COPY ../../package.json ../../pnpm-lock.yaml ../../pnpm-workspace.yaml ./
-COPY ../../packages/shared/package.json ./packages/shared/
-COPY ./package.json ./apps/server/
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/server/package.json ./apps/server/
 
 RUN pnpm install --frozen-lockfile
 
-COPY ../../packages/shared ./packages/shared
-COPY . ./apps/server
-COPY ../../turbo.json ./
+COPY packages/shared ./packages/shared
+COPY apps/server ./apps/server
+COPY turbo.json ./
 
 RUN pnpm turbo build --filter=server
 
@@ -24,9 +24,9 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 appuser
 
-COPY ../../package.json ../../pnpm-lock.yaml ../../pnpm-workspace.yaml ./
-COPY ../../packages/shared/package.json ./packages/shared/
-COPY ./package.json ./apps/server/
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/server/package.json ./apps/server/
 
 RUN pnpm install --prod --frozen-lockfile
 
