@@ -8,6 +8,7 @@ import { checkDatabaseConnection } from './db';
 import { authMiddleware } from './middleware/auth';
 import { corsMiddleware } from './middleware/cors';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { securityHeaders, corsDebugger } from './middleware/security';
 import { swaggerConfig } from './utils/swagger';
 
 dotenv.config();
@@ -17,9 +18,33 @@ const PORT = Number(process.env.PORT) || 3000;
 const NODE_ENV = process.env.NODE_ENV ?? 'development';
 const FRONTEND_URL = process.env.FRONTEND_URL ?? '';
 
+const getEffectiveFrontendURL = () => {
+  if (NODE_ENV === 'development') {
+    return process.env.DEV_FRONTEND_URL || 'http://localhost:5173';
+  }
+
+  if (!FRONTEND_URL) {
+    console.error('❌ FRONTEND_URL is required in production');
+    throw new Error(
+      'FRONTEND_URL environment variable is required in production'
+    );
+  }
+
+  return FRONTEND_URL;
+};
+
+console.log('=== Server Configuration ===');
+console.log('Environment:', NODE_ENV);
+console.log('Port:', PORT);
+console.log('Frontend URL:', FRONTEND_URL);
+console.log('Effective Frontend URL:', getEffectiveFrontendURL());
+
 app.use(NODE_ENV === 'production' ? morgan('combined') : morgan('dev'));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(securityHeaders);
+app.use(corsDebugger);
 app.use(corsMiddleware);
 app.use(authMiddleware);
 
@@ -29,7 +54,9 @@ app.get('/', async (req, res) => {
 
   if (req.oidc?.isAuthenticated()) {
     console.log('✅ User is authenticated, redirecting to frontend');
-    return res.redirect(FRONTEND_URL);
+    const frontendUrl = getEffectiveFrontendURL();
+    console.log('Redirecting to:', frontendUrl);
+    return res.redirect(frontendUrl);
   } else {
     console.log('❌ User not authenticated');
     return res.json({
@@ -41,10 +68,13 @@ app.get('/', async (req, res) => {
   }
 });
 
-app.get('/callback', (req, res) => {
+// Handle both GET and POST callbacks (Auth0 uses form_post)
+app.all('/callback', (req, res) => {
   console.log('=== Auth Callback Handler ===');
+  console.log('Request Method:', req.method);
   console.log('Request URL:', req.url);
   console.log('Request query:', req.query);
+  console.log('Request body:', req.body);
   console.log('Auth status:', req.oidc?.isAuthenticated());
   console.log('User:', req.oidc?.user);
   console.log('Access token available:', !!req.oidc?.accessToken);
@@ -60,8 +90,9 @@ app.get('/callback', (req, res) => {
 
     const errorMessage = String(req.query.error_description || req.query.error);
     console.log('Redirecting to frontend with error');
+    const frontendUrl = getEffectiveFrontendURL();
     return res.redirect(
-      `${FRONTEND_URL}/welcome?error=${encodeURIComponent(errorMessage)}`
+      `${frontendUrl}/welcome?error=${encodeURIComponent(errorMessage)}`
     );
   }
 
@@ -78,12 +109,21 @@ app.get('/callback', (req, res) => {
     console.log('Response headers being set:', res.getHeaders());
     console.log('Set-Cookie headers:', res.get('Set-Cookie'));
     console.log('Redirecting authenticated user to frontend');
-    return res.redirect(FRONTEND_URL);
+
+    const frontendUrl = getEffectiveFrontendURL();
+    console.log('🔧 Environment variables:');
+    console.log('  NODE_ENV:', NODE_ENV);
+    console.log('  FRONTEND_URL:', FRONTEND_URL);
+    console.log('  DEV_FRONTEND_URL:', process.env.DEV_FRONTEND_URL);
+    console.log('📍 Callback redirecting to:', frontendUrl);
+
+    return res.redirect(frontendUrl);
   } else {
     console.log('❌ User not authenticated after callback');
     console.log('Redirecting to frontend welcome page');
 
-    return res.redirect(`${FRONTEND_URL}/welcome?error=authentication_failed`);
+    const frontendUrl = getEffectiveFrontendURL();
+    return res.redirect(`${frontendUrl}/welcome?error=authentication_failed`);
   }
 });
 

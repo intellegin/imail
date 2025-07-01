@@ -8,10 +8,20 @@ const secret = process.env.SESSION_SECRET;
 const frontendURL = process.env.FRONTEND_URL ?? '';
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 
+const getEffectiveFrontendURL = () => {
+  if (nodeEnv === 'development') {
+    return process.env.DEV_FRONTEND_URL || 'http://localhost:5173';
+  }
+  return frontendURL;
+};
+
 console.log('=== Auth0 Configuration ===');
-console.log('baseURL:', baseURL || 'AUTO-DETECT');
+console.log('baseURL:', baseURL ?? 'AUTO-DETECT');
+console.log('clientID:', clientID ? 'SET' : 'NOT SET');
+console.log('issuerBaseURL:', issuerBaseURL ? 'SET' : 'NOT SET');
 console.log('secret:', secret ? 'SET' : 'NOT SET');
-console.log('frontendURL:', frontendURL);
+console.log('configured frontendURL:', frontendURL);
+console.log('effective frontendURL:', getEffectiveFrontendURL());
 console.log('environment:', nodeEnv);
 
 if (!clientID) {
@@ -29,7 +39,6 @@ if (!secret) {
   console.warn('🔧 Server will start without Auth0 authentication');
 }
 
-// Check if all required Auth0 config is available
 const hasValidAuth0Config = clientID && issuerBaseURL && secret;
 
 let authMiddleware: RequestHandler;
@@ -55,13 +64,7 @@ if (!hasValidAuth0Config) {
     );
   }
 
-  // Production-ready configuration
-  const isProduction = nodeEnv === 'production';
-  const effectiveBaseURL =
-    baseURL ||
-    (isProduction
-      ? 'https://imailserver-production.up.railway.app'
-      : 'http://localhost:3000');
+  const effectiveBaseURL = baseURL ?? 'http://localhost:3000';
   const isHttps = effectiveBaseURL.startsWith('https://');
 
   const config = {
@@ -86,10 +89,9 @@ if (!hasValidAuth0Config) {
       login: '/login',
       logout: '/logout',
       callback: '/callback',
-      postLogoutRedirect: frontendURL,
+      postLogoutRedirect: getEffectiveFrontendURL(),
     },
     authorizationParams: {
-      response_mode: isHttps ? 'form_post' : 'query',
       scope: 'openid profile email',
     },
   };
@@ -97,7 +99,6 @@ if (!hasValidAuth0Config) {
   console.log('✅ Auth0 configured:', effectiveBaseURL);
   console.log('🔒 Protocol:', isHttps ? 'HTTPS' : 'HTTP');
   console.log('🍪 Cookie sameSite:', isHttps ? 'None' : 'Lax');
-  console.log('📝 Response mode:', isHttps ? 'form_post' : 'query');
 
   authMiddleware = auth(config);
 }
