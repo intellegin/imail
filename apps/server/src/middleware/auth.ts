@@ -6,11 +6,13 @@ const clientID = process.env.AUTH0_CLIENT_ID;
 const issuerBaseURL = process.env.AUTH0_ISSUER_BASE_URL;
 const secret = process.env.SESSION_SECRET;
 const frontendURL = process.env.FRONTEND_URL ?? '';
+const nodeEnv = process.env.NODE_ENV ?? 'development';
 
 console.log('=== Auth0 Configuration ===');
-console.log('baseURL:', baseURL || 'DYNAMIC (will be detected from requests)');
+console.log('baseURL:', baseURL || 'AUTO-DETECT');
 console.log('secret:', secret ? 'SET' : 'NOT SET');
 console.log('frontendURL:', frontendURL);
+console.log('environment:', nodeEnv);
 
 if (!clientID) {
   console.error('❌ AUTH0_CLIENT_ID environment variable is required');
@@ -27,21 +29,6 @@ if (!secret) {
   console.warn('🔧 Server will start without Auth0 authentication');
 }
 
-// Dynamic base URL detection function
-const getBaseURL = (req: any) => {
-  if (baseURL) {
-    return baseURL;
-  }
-
-  // Auto-detect from request headers
-  const protocol = req.get('X-Forwarded-Proto') || req.protocol || 'http';
-  const host = req.get('X-Forwarded-Host') || req.get('Host') || req.hostname;
-  const detectedURL = `${protocol}://${host}`;
-
-  console.log(`🔍 Auto-detected base URL: ${detectedURL}`);
-  return detectedURL;
-};
-
 // Check if all required Auth0 config is available
 const hasValidAuth0Config = clientID && issuerBaseURL && secret;
 
@@ -50,9 +37,7 @@ let authMiddleware: RequestHandler;
 if (!hasValidAuth0Config) {
   console.warn('⚠️  Auth0 configuration incomplete - using mock middleware');
 
-  // Create a mock middleware that sets basic auth properties
   authMiddleware = (req, _res, next) => {
-    // Mock OIDC properties for development
     (req as any).oidc = {
       isAuthenticated: () => false,
       user: undefined,
@@ -70,107 +55,50 @@ if (!hasValidAuth0Config) {
     );
   }
 
-  // Create Auth0 middleware with dynamic baseURL support
-  if (baseURL) {
-    // Static baseURL configuration
-    const isHttps = baseURL.startsWith('https://');
-    const config = {
-      authRequired: false,
-      auth0Logout: true,
-      baseURL,
-      clientID,
-      issuerBaseURL,
-      secret,
-      session: {
-        name: 'imail-session',
-        rolling: true,
-        rollingDuration: 24 * 60 * 60,
-        cookie: {
-          httpOnly: true,
-          secure: isHttps,
-          sameSite: isHttps ? 'None' : 'Lax',
-          maxAge: 24 * 60 * 60 * 1000,
-        },
+  // Production-ready configuration
+  const isProduction = nodeEnv === 'production';
+  const effectiveBaseURL =
+    baseURL ||
+    (isProduction
+      ? 'https://imailserver-production.up.railway.app'
+      : 'http://localhost:3000');
+  const isHttps = effectiveBaseURL.startsWith('https://');
+
+  const config = {
+    authRequired: false,
+    auth0Logout: true,
+    baseURL: effectiveBaseURL,
+    clientID,
+    issuerBaseURL,
+    secret,
+    session: {
+      name: 'imail-session',
+      rolling: true,
+      rollingDuration: 24 * 60 * 60,
+      cookie: {
+        httpOnly: true,
+        secure: isHttps,
+        sameSite: isHttps ? 'None' : 'Lax',
       },
-      routes: {
-        login: '/login',
-        logout: '/logout',
-        callback: '/callback',
-        postLogoutRedirect: frontendURL,
-      },
-      // Fix response_mode for HTTP vs HTTPS
-      ...(isHttps
-        ? {}
-        : {
-            authorizationParams: {
-              response_mode: 'query',
-              scope: 'openid profile email',
-            },
-          }),
-    };
+    },
+    routes: {
+      login: '/login',
+      logout: '/logout',
+      callback: '/callback',
+      postLogoutRedirect: frontendURL,
+    },
+    authorizationParams: {
+      response_mode: isHttps ? 'form_post' : 'query',
+      scope: 'openid profile email',
+    },
+  };
 
-    console.log('✅ Auth0 middleware configured with static baseURL:', baseURL);
-    console.log(
-      '🔒 Protocol:',
-      isHttps ? 'HTTPS (secure)' : 'HTTP (development)'
-    );
-    authMiddleware = auth(config);
-  } else {
-    // Dynamic baseURL - initialize auth middleware on first request
-    let dynamicAuth: RequestHandler | null = null;
+  console.log('✅ Auth0 configured:', effectiveBaseURL);
+  console.log('🔒 Protocol:', isHttps ? 'HTTPS' : 'HTTP');
+  console.log('🍪 Cookie sameSite:', isHttps ? 'None' : 'Lax');
+  console.log('📝 Response mode:', isHttps ? 'form_post' : 'query');
 
-    authMiddleware = (req, res, next) => {
-      if (!dynamicAuth) {
-        const detectedBaseURL = getBaseURL(req);
-        const isHttps = detectedBaseURL.startsWith('https://');
-
-        const config = {
-          authRequired: false,
-          auth0Logout: true,
-          baseURL: detectedBaseURL,
-          clientID,
-          issuerBaseURL,
-          secret,
-          session: {
-            name: 'imail-session',
-            rolling: true,
-            rollingDuration: 24 * 60 * 60,
-            cookie: {
-              httpOnly: true,
-              secure: isHttps,
-              sameSite: isHttps ? 'None' : 'Lax',
-              maxAge: 24 * 60 * 60 * 1000,
-            },
-          },
-          routes: {
-            login: '/login',
-            logout: '/logout',
-            callback: '/callback',
-            postLogoutRedirect: frontendURL,
-          },
-          ...(isHttps
-            ? {}
-            : {
-                authorizationParams: {
-                  response_mode: 'query',
-                  scope: 'openid profile email',
-                },
-              }),
-        };
-
-        console.log(
-          '✅ Auth0 middleware configured with dynamic baseURL:',
-          detectedBaseURL
-        );
-        console.log('🔒 Protocol:', isHttps ? 'HTTPS (secure)' : 'HTTP (development)');
-        dynamicAuth = auth(config);
-      }
-
-      dynamicAuth(req, res, next);
-    };
-  }
-
-  console.log('📍 URL Detection:', baseURL ? 'Static' : 'Dynamic');
+  authMiddleware = auth(config);
 }
 
 export { authMiddleware };
