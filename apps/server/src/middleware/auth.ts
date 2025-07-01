@@ -1,14 +1,14 @@
 import { RequestHandler } from 'express';
 import { auth, requiresAuth as oidcRequiresAuth } from 'express-openid-connect';
 
-const baseURL = process.env.BASE_URL ?? '';
+const baseURL = process.env.BASE_URL;
 const clientID = process.env.AUTH0_CLIENT_ID;
 const issuerBaseURL = process.env.AUTH0_ISSUER_BASE_URL;
 const secret = process.env.SESSION_SECRET;
 const frontendURL = process.env.FRONTEND_URL ?? '';
 
 console.log('=== Auth0 Configuration ===');
-console.log('baseURL:', baseURL);
+console.log('baseURL:', baseURL || 'DYNAMIC (will be detected from requests)');
 console.log('secret:', secret ? 'SET' : 'NOT SET');
 console.log('frontendURL:', frontendURL);
 
@@ -26,6 +26,21 @@ if (!secret) {
   console.error('❌ SESSION_SECRET environment variable is required');
   console.warn('🔧 Server will start without Auth0 authentication');
 }
+
+// Dynamic base URL detection function
+const getBaseURL = (req: any) => {
+  if (baseURL) {
+    return baseURL;
+  }
+
+  // Auto-detect from request headers
+  const protocol = req.get('X-Forwarded-Proto') || req.protocol || 'http';
+  const host = req.get('X-Forwarded-Host') || req.get('Host') || req.hostname;
+  const detectedURL = `${protocol}://${host}`;
+
+  console.log(`🔍 Auto-detected base URL: ${detectedURL}`);
+  return detectedURL;
+};
 
 // Check if all required Auth0 config is available
 const hasValidAuth0Config = clientID && issuerBaseURL && secret;
@@ -55,28 +70,71 @@ if (!hasValidAuth0Config) {
     );
   }
 
-  const config = {
-    authRequired: false,
-    auth0Logout: true,
-    baseURL,
-    clientID,
-    issuerBaseURL,
-    secret,
-    session: {
-      name: 'imail-session',
-      rolling: true,
-      rollingDuration: 24 * 60 * 60,
-    },
-    routes: {
-      login: '/login',
-      logout: '/logout',
-      callback: '/callback',
-      postLogoutRedirect: frontendURL,
-    },
-  };
+  // Create Auth0 middleware with dynamic baseURL support
+  if (baseURL) {
+    // Static baseURL configuration
+    const config = {
+      authRequired: false,
+      auth0Logout: true,
+      baseURL,
+      clientID,
+      issuerBaseURL,
+      secret,
+      session: {
+        name: 'imail-session',
+        rolling: true,
+        rollingDuration: 24 * 60 * 60,
+      },
+      routes: {
+        login: '/login',
+        logout: '/logout',
+        callback: '/callback',
+        postLogoutRedirect: frontendURL,
+      },
+    };
 
-  console.log('✅ Auth0 middleware configured successfully');
-  authMiddleware = auth(config);
+    console.log('✅ Auth0 middleware configured with static baseURL');
+    authMiddleware = auth(config);
+  } else {
+    // Dynamic baseURL - initialize auth middleware on first request
+    let dynamicAuth: RequestHandler | null = null;
+
+    authMiddleware = (req, res, next) => {
+      if (!dynamicAuth) {
+        const detectedBaseURL = getBaseURL(req);
+
+        const config = {
+          authRequired: false,
+          auth0Logout: true,
+          baseURL: detectedBaseURL,
+          clientID,
+          issuerBaseURL,
+          secret,
+          session: {
+            name: 'imail-session',
+            rolling: true,
+            rollingDuration: 24 * 60 * 60,
+          },
+          routes: {
+            login: '/login',
+            logout: '/logout',
+            callback: '/callback',
+            postLogoutRedirect: frontendURL,
+          },
+        };
+
+        console.log(
+          '✅ Auth0 middleware configured with dynamic baseURL:',
+          detectedBaseURL
+        );
+        dynamicAuth = auth(config);
+      }
+
+      dynamicAuth(req, res, next);
+    };
+  }
+
+  console.log('📍 URL Detection:', baseURL ? 'Static' : 'Dynamic');
 }
 
 export { authMiddleware };

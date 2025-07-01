@@ -1,186 +1,276 @@
-# 🚂 Railway Deployment Guide
+# 🐳 Docker Deployment Guide
 
-This guide walks you through deploying the iMail backend (server + packages) to Railway.
+This guide walks you through building and deploying the iMail server using Docker.
 
 ## Prerequisites
 
-- [Railway account](https://railway.app) (free tier available)
-- GitHub repository with your code
-- Auth0 application configured
+- [Docker](https://docs.docker.com/get-docker/) installed
+- [Docker Compose](https://docs.docker.com/compose/install/) (optional)
+- Docker Hub account (for publishing)
 
-## Step-by-Step Deployment
+## Quick Start
 
-### 1. Connect to Railway
+### 1. Build the Docker Image
 
-1. Go to [Railway](https://railway.app) and sign in with GitHub
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Select your iMail repository
-4. Railway will automatically detect the configuration
-
-### 2. Configure Environment Variables
-
-In your Railway project dashboard, add these environment variables:
-
-#### Required Variables
 ```bash
-# Database (Railway PostgreSQL)
-DATABASE_URL=<automatically_set_by_railway_postgres_service>
+./scripts/build-docker.sh
+```
 
-# Auth0 Configuration
+This builds and tags the image as `dndventuress/imail-server:latest`.
+
+### 2. Push to Docker Hub
+
+```bash
+./scripts/push-docker.sh
+```
+
+Or manually:
+```bash
+docker login
+docker push dndventuress/imail-server:latest
+```
+
+### 3. Use Published Image
+
+Pull and run the published image:
+```bash
+docker pull dndventuress/imail-server:latest
+docker run -d \
+  --name imail-server \
+  -p 3000:3000 \
+  --env-file .env \
+  dndventuress/imail-server:latest
+```
+
+### 4. Environment Variables
+
+Create a `.env` file in the project root with:
+
+```env
+DATABASE_URL=postgresql://username:password@host:port/database
 AUTH0_CLIENT_ID=your_auth0_client_id
-AUTH0_ISSUER_BASE_URL=https://your-tenant.auth0.com
-AUTH0_CLIENT_SECRET=your_auth0_client_secret
-
-# Session Security
-SESSION_SECRET=generate_a_long_random_string_here
-
-# CORS & Frontend URLs
-CORS_ORIGIN=https://your-frontend-domain.com
-FRONTEND_URL=https://your-frontend-domain.com
-BASE_URL=${{RAILWAY_PUBLIC_DOMAIN}}
+AUTH0_ISSUER_BASE_URL=https://your-domain.auth0.com
+SESSION_SECRET=your_32_character_secret_key
+FRONTEND_URL=http://localhost:5173
+PORT=3000
+NODE_ENV=production
 ```
 
-### 3. Add PostgreSQL Service
+**Note**: `BASE_URL` is optional. If not provided, the server will auto-detect the URL from incoming requests. This is perfect for Docker deployments where the final URL is unknown.
 
-1. In Railway dashboard, click "New" → "Database" → "PostgreSQL"
-2. Railway automatically provisions database and sets `DATABASE_URL`
-3. The database includes all necessary extensions (like pgvector if needed)
+## Production Deployment
 
-### 4. Run Database Migrations
+### Flexible URL Configuration
 
-#### Option A: Manual Migration (Recommended for first deployment)
-1. Install Railway CLI: `npm install -g @railway/cli`
-2. Login: `railway login`
-3. Connect to project: `railway link`
-4. Run migrations: `railway run pnpm run db:migrate`
+The server supports three URL configuration modes:
 
-#### Option B: Auto-migration on Deploy
-Add this to your `railway.json` deploy section:
-```json
-{
-  "deploy": {
-    "preDeployCommand": ["pnpm run db:migrate"],
-    "startCommand": "cd apps/server && node dist/index.js"
-  }
-}
+1. **Static URL** (traditional):
+   ```env
+   BASE_URL=https://api.yourdomain.com
+   ```
+
+2. **Dynamic Detection** (recommended for Docker):
+   ```env
+   # BASE_URL not set - auto-detects from requests
+   ```
+
+3. **Runtime Override**:
+   ```bash
+   docker run -e BASE_URL=https://api.yourdomain.com dndventuress/imail-server:latest
+   ```
+
+### Using Docker Compose
+
+Create `docker-compose.prod.yml`:
+
+```yaml
+version: '3.8'
+services:
+  server:
+    image: dndventuress/imail-server:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID}
+      - AUTH0_ISSUER_BASE_URL=${AUTH0_ISSUER_BASE_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL}
+      # BASE_URL is optional - will auto-detect if not set
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 ```
 
-### 5. Update Auth0 Configuration
+Deploy:
 
-In your Auth0 dashboard:
-1. Add Railway domain to **Allowed Callback URLs**:
-   ```
-   https://your-app-name.railway.app/callback
-   ```
-2. Add to **Allowed Logout URLs**:
-   ```
-   https://your-app-name.railway.app/logout
-   ```
-3. Update **Allowed Web Origins** and **Allowed Origins (CORS)**
-
-### 6. Deploy & Monitor
-
-1. Push changes to GitHub - Railway auto-deploys
-2. Check deployment logs in Railway dashboard
-3. Test health endpoint: `https://your-app.railway.app/api/health`
-4. Monitor with Railway's built-in metrics
-
-## Configuration Files
-
-### `railway.json`
-```json
-{
-  "$schema": "https://railway.com/railway.schema.json",
-  "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "pnpm install --frozen-lockfile && pnpm turbo build --filter=server",
-    "watchPatterns": ["apps/server/**", "packages/shared/**", "packages/db/**"]
-  },
-  "deploy": {
-    "startCommand": "cd apps/server && node dist/index.js",
-    "healthcheckPath": "/api/health",
-    "healthcheckTimeout": 100,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
-  }
-}
+```bash
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
-### `nixpacks.toml`
-```toml
-[phases.setup]
-nixPkgs = ["nodejs_18", "pnpm"]
+### Cloud Deployment Examples
 
-[phases.install]
-cmd = "pnpm install --frozen-lockfile"
+#### AWS ECS/Fargate
+```bash
+# Using published image
+aws ecs create-service \
+  --cluster my-cluster \
+  --service-name imail-server \
+  --task-definition imail-task \
+  --desired-count 1
+```
 
-[phases.build]
-cmd = "pnpm turbo build --filter=server"
+#### Google Cloud Run
+```bash
+gcloud run deploy imail-server \
+  --image=dndventuress/imail-server:latest \
+  --set-env-vars="DATABASE_URL=$DATABASE_URL" \
+  --allow-unauthenticated \
+  --port=3000
+```
 
-[start]
-cmd = "cd apps/server && node dist/index.js"
+#### Kubernetes
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: imail-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: imail-server
+  template:
+    metadata:
+      labels:
+        app: imail-server
+    spec:
+      containers:
+      - name: imail-server
+        image: dndventuress/imail-server:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://..."
+        - name: AUTH0_CLIENT_ID
+          value: "your_client_id"
+```
 
-[variables]
-NODE_ENV = "production"
-PORT = "3000"
+#### Railway
+```bash
+railway login
+railway new
+railway add --image dndventuress/imail-server:latest
+```
+
+### Database Migrations
+
+Run migrations before starting the server:
+
+```bash
+pnpm run db:migrate
+```
+
+### Auth0 Configuration
+
+The server auto-detects its URL, but you still need to configure Auth0:
+
+1. **Allowed Callback URLs**:
+   ```
+   https://your-domain.com/callback
+   ```
+
+2. **Allowed Logout URLs**:
+   ```
+   https://your-domain.com/logout
+   ```
+
+3. **Development URLs** (if testing locally):
+   ```
+   http://localhost:3000/callback
+   http://localhost:3000/logout
+   ```
+
+## Docker Hub Repository
+
+The image is published to: https://hub.docker.com/r/dndventuress/imail-server
+
+**Available tags:**
+- `latest` - Latest stable release
+- Semantic versions (e.g., `1.0.0`, `1.1.0`)
+
+## URL Detection
+
+The server detects URLs using:
+
+1. `X-Forwarded-Proto` header (HTTPS/HTTP)
+2. `X-Forwarded-Host` header (domain)
+3. Falls back to `Host` header and `req.protocol`
+
+This works automatically with:
+- Load balancers (ALB, nginx)
+- Reverse proxies
+- Cloud platforms (Heroku, Cloud Run, etc.)
+- Container orchestration (Docker Swarm, Kubernetes)
+
+## Monitoring
+
+Check container status:
+```bash
+docker logs imail-server
+```
+
+Health endpoint:
+```bash
+curl https://your-domain.com/api/health
 ```
 
 ## Troubleshooting
 
-### Build Failures
-- Check build logs in Railway dashboard
-- Ensure all dependencies are in package.json
-- Verify turbo build works locally: `pnpm turbo build`
+### Build Issues
 
-### Database Connection Issues
-- Verify `DATABASE_URL` is set by PostgreSQL service
-- Check database service is running in Railway dashboard
-- Test connection with Railway CLI: `railway run psql`
+Ensure all dependencies are properly installed:
+```bash
+pnpm install
+pnpm build
+```
 
-### Auth0 Issues
-- Verify callback URLs match Railway domain
-- Check environment variables are set correctly
-- Test Auth0 configuration in development first
+### URL Detection Issues
 
-### Health Check Failures
-- Ensure `/api/health` endpoint returns 200 status
-- Check server starts without errors
-- Verify port configuration (Railway sets `PORT` automatically)
+If auto-detection fails, manually set BASE_URL:
+```bash
+docker run -e BASE_URL=https://your-domain.com dndventuress/imail-server:latest
+```
 
-## Cost Optimization
+### Behind Proxy/Load Balancer
 
-### Free Tier Limits
-- $5 credit per month
-- 500 hours of usage
-- 1GB outbound data transfer
+Ensure your proxy sets these headers:
+```
+X-Forwarded-Proto: https
+X-Forwarded-Host: your-domain.com
+```
 
-### Optimize Usage
-- Use Railway's PostgreSQL service (included in compute time)
-- Monitor resource usage in dashboard
-- Consider hibernation for non-production environments
+### Port Issues
 
-## Production Checklist
+Ensure port 3000 is not in use and properly exposed in your deployment environment.
 
-- [ ] Environment variables configured
-- [ ] Database migrations run successfully  
-- [ ] Auth0 URLs updated with Railway domain
-- [ ] Health check endpoint responding
-- [ ] SSL certificate (automatic with Railway)
-- [ ] Custom domain configured (optional)
-- [ ] Monitoring and alerts set up
-- [ ] Backup strategy for database
+## Security Considerations
 
-## Support
+- Use strong session secrets (32+ characters)
+- Enable SSL/TLS in production
+- Use secure database connections
+- Regularly update Docker base images
+- Scan images for vulnerabilities
+- Ensure proxy headers are from trusted sources
 
-- [Railway Documentation](https://docs.railway.app)
-- [Railway Discord](https://discord.gg/railway)
-- [Railway Status Page](https://status.railway.app)
+## Multi-Stage Build
 
-## Next Steps
-
-After successful deployment:
-1. Set up monitoring and logging
-2. Configure custom domain (optional)
-3. Set up CI/CD workflows
-4. Consider staging environment
-5. Plan backup and disaster recovery 
+The Dockerfile uses multi-stage builds for:
+- Reduced image size
+- Better security (production image doesn't include dev dependencies)
+- Faster deployments 

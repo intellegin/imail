@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const response = await fetch(
           `${serverBaseUrl}${API_ENDPOINTS.AUTH.VERIFY}`,
           {
-            credentials: 'include',
+          credentials: 'include',
           }
         )
         const data = await response.json()

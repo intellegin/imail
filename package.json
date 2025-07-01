@@ -2,6 +2,10 @@
   "name": "imail",
   "private": true,
   "packageManager": "pnpm@10.9.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
@@ -14,7 +18,8 @@
     "db:start": "docker-compose up postgres -d",
     "db:stop": "docker-compose down",
     "db:reset": "docker-compose down -v && pnpm run db:start",
-    "db:migrate": "cd packages/db && pnpm run migrate"
+    "db:migrate": "cd packages/db && pnpm run migrate",
+    "migrate": "turbo migrate"
   },
   "devDependencies": {
     "turbo": "^2.4.0"
