@@ -73,6 +73,7 @@ if (!hasValidAuth0Config) {
   // Create Auth0 middleware with dynamic baseURL support
   if (baseURL) {
     // Static baseURL configuration
+    const isHttps = baseURL.startsWith('https://');
     const config = {
       authRequired: false,
       auth0Logout: true,
@@ -91,9 +92,22 @@ if (!hasValidAuth0Config) {
         callback: '/callback',
         postLogoutRedirect: frontendURL,
       },
+      // Fix response_mode for HTTP vs HTTPS
+      ...(isHttps
+        ? {}
+        : {
+            authorizationParams: {
+              response_mode: 'query',
+              scope: 'openid profile email',
+            },
+          }),
     };
 
-    console.log('✅ Auth0 middleware configured with static baseURL');
+    console.log('✅ Auth0 middleware configured with static baseURL:', baseURL);
+    console.log(
+      '🔒 Protocol:',
+      isHttps ? 'HTTPS (secure)' : 'HTTP (development)'
+    );
     authMiddleware = auth(config);
   } else {
     // Dynamic baseURL - initialize auth middleware on first request
@@ -102,6 +116,7 @@ if (!hasValidAuth0Config) {
     authMiddleware = (req, res, next) => {
       if (!dynamicAuth) {
         const detectedBaseURL = getBaseURL(req);
+        const isHttps = detectedBaseURL.startsWith('https://');
 
         const config = {
           authRequired: false,
@@ -121,12 +136,20 @@ if (!hasValidAuth0Config) {
             callback: '/callback',
             postLogoutRedirect: frontendURL,
           },
+          // Fix response_mode for HTTP vs HTTPS
+          ...(isHttps ? {} : { 
+            authorizationParams: {
+              response_mode: 'query',
+              scope: 'openid profile email',
+            }
+          }),
         };
 
         console.log(
           '✅ Auth0 middleware configured with dynamic baseURL:',
           detectedBaseURL
         );
+        console.log('🔒 Protocol:', isHttps ? 'HTTPS (secure)' : 'HTTP (development)');
         dynamicAuth = auth(config);
       }
 
