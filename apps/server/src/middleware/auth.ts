@@ -89,6 +89,7 @@ if (!hasValidAuth0Config) {
           httpOnly: true,
           secure: isHttps,
           sameSite: isHttps ? 'None' : 'Lax',
+          maxAge: 24 * 60 * 60 * 1000,
         },
       },
       routes: {
@@ -138,6 +139,7 @@ if (!hasValidAuth0Config) {
               httpOnly: true,
               secure: isHttps,
               sameSite: isHttps ? 'None' : 'Lax',
+              maxAge: 24 * 60 * 60 * 1000,
             },
           },
           routes: {
