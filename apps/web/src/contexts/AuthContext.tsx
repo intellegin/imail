@@ -49,13 +49,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch(`${serverBaseUrl}/`, {
-          credentials: 'include',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-        })
+        const response = await fetch(
+          `${serverBaseUrl}${API_ENDPOINTS.AUTH.VERIFY}`,
+          {
+            credentials: 'include',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+          }
+        )
 
         if (!response.ok) {
           throw new Error(

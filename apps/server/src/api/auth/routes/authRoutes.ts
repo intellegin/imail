@@ -79,11 +79,6 @@ router.get('/verify', async (req, res) => {
     'Surrogate-Control': 'no-store',
   });
 
-  console.log('Session data:', (req as any).session);
-  console.log('OIDC object:', req.oidc);
-  console.log('Cookies received:', req.cookies);
-  console.log('Headers origin:', req.get('origin'));
-
   const isAuthenticated = req.oidc?.isAuthenticated() ?? false;
   const user = req.oidc?.user ?? null;
 

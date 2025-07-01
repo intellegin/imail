@@ -50,34 +50,7 @@ app.use(corsMiddleware);
 app.use(authMiddleware);
 
 app.get('/', async (req, res) => {
-  res.set({
-    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-    Pragma: 'no-cache',
-    Expires: '0',
-    'Surrogate-Control': 'no-store',
-  });
-
-  const isAuthenticated = req.oidc?.isAuthenticated() ?? false;
-  const user = req.oidc?.user ?? null;
-
-  // If request wants JSON (from frontend), return auth status
-  if (req.get('Accept')?.includes('application/json')) {
-    return res.json({
-      authenticated: isAuthenticated,
-      user: isAuthenticated
-        ? {
-            id: user?.sub,
-            email: user?.email,
-            name: user?.name,
-            picture: user?.picture,
-            emailVerified: user?.email_verified,
-          }
-        : null,
-    });
-  }
-
-  // Browser navigation - redirect behavior
-  if (isAuthenticated) {
+  if (req.oidc?.isAuthenticated()) {
     const frontendUrl = getEffectiveFrontendURL();
     return res.redirect(frontendUrl);
   } else {
@@ -85,29 +58,8 @@ app.get('/', async (req, res) => {
       message: 'API is running successfully!',
       environment: NODE_ENV,
       timestamp: new Date().toISOString(),
-      authenticated: false,
+      authenticated: req.oidc?.isAuthenticated() ?? false,
     });
-  }
-});
-
-app.all('/callback', (req, res) => {
-  const isAuthenticated = req.oidc?.isAuthenticated() || false;
-  const user = req.oidc?.user || null;
-
-  if (req.query.error) {
-    const errorMessage = String(req.query.error_description || req.query.error);
-    const frontendUrl = getEffectiveFrontendURL();
-    return res.redirect(
-      `${frontendUrl}/welcome?error=${encodeURIComponent(errorMessage)}`
-    );
-  }
-
-  if (isAuthenticated && user) {
-    const frontendUrl = getEffectiveFrontendURL();
-    return res.redirect(frontendUrl);
-  } else {
-    const frontendUrl = getEffectiveFrontendURL();
-    return res.redirect(`${frontendUrl}/welcome?error=authentication_failed`);
   }
 });
 

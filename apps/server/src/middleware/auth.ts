@@ -81,7 +81,7 @@ if (!hasValidAuth0Config) {
       cookie: {
         httpOnly: true,
         secure: isHttps,
-        sameSite: 'None',
+        sameSite: isHttps ? 'None' : 'Lax',
         path: '/',
       },
     },
@@ -99,7 +99,6 @@ if (!hasValidAuth0Config) {
 
   console.log('✅ Auth0 configured:', effectiveBaseURL);
   console.log('🔒 Protocol:', isHttps ? 'HTTPS' : 'HTTP');
-  console.log('🍪 Cookie sameSite:', isHttps ? 'None' : 'Lax');
 
   authMiddleware = auth(config);
 }
