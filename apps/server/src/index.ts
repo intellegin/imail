@@ -21,7 +21,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL ?? '';
 
 const getEffectiveFrontendURL = () => {
   if (NODE_ENV === 'development') {
-    return process.env.DEV_FRONTEND_URL || 'http://localhost:5173';
+    return process.env.DEV_FRONTEND_URL ?? 'http://localhost:5173';
   }
 
   if (!FRONTEND_URL) {
@@ -50,47 +50,52 @@ app.use(corsMiddleware);
 app.use(authMiddleware);
 
 app.get('/', async (req, res) => {
-  console.log('Auth status:', req.oidc?.isAuthenticated());
-  console.log('User:', req.oidc?.user);
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0',
+    'Surrogate-Control': 'no-store',
+  });
 
-  if (req.oidc?.isAuthenticated()) {
-    console.log('✅ User is authenticated, redirecting to frontend');
+  const isAuthenticated = req.oidc?.isAuthenticated() ?? false;
+  const user = req.oidc?.user ?? null;
+
+  // If request wants JSON (from frontend), return auth status
+  if (req.get('Accept')?.includes('application/json')) {
+    return res.json({
+      authenticated: isAuthenticated,
+      user: isAuthenticated
+        ? {
+            id: user?.sub,
+            email: user?.email,
+            name: user?.name,
+            picture: user?.picture,
+            emailVerified: user?.email_verified,
+          }
+        : null,
+    });
+  }
+
+  // Browser navigation - redirect behavior
+  if (isAuthenticated) {
     const frontendUrl = getEffectiveFrontendURL();
-    console.log('Redirecting to:', frontendUrl);
     return res.redirect(frontendUrl);
   } else {
-    console.log('❌ User not authenticated');
     return res.json({
       message: 'API is running successfully!',
       environment: NODE_ENV,
       timestamp: new Date().toISOString(),
-      authenticated: req.oidc?.isAuthenticated() || false,
+      authenticated: false,
     });
   }
 });
 
-// Handle both GET and POST callbacks (Auth0 uses form_post)
 app.all('/callback', (req, res) => {
-  console.log('=== Auth Callback Handler ===');
-  console.log('Request Method:', req.method);
-  console.log('Request URL:', req.url);
-  console.log('Request query:', req.query);
-  console.log('Request body:', req.body);
-  console.log('Auth status:', req.oidc?.isAuthenticated());
-  console.log('User:', req.oidc?.user);
-  console.log('Access token available:', !!req.oidc?.accessToken);
-  console.log('Session ID:', (req as any).sessionID || 'N/A');
-  console.log('Cookies in request:', Object.keys(req.cookies || {}));
-
   const isAuthenticated = req.oidc?.isAuthenticated() || false;
   const user = req.oidc?.user || null;
 
   if (req.query.error) {
-    console.error('❌ Auth0 callback error:', req.query.error);
-    console.error('Error description:', req.query.error_description);
-
     const errorMessage = String(req.query.error_description || req.query.error);
-    console.log('Redirecting to frontend with error');
     const frontendUrl = getEffectiveFrontendURL();
     return res.redirect(
       `${frontendUrl}/welcome?error=${encodeURIComponent(errorMessage)}`
@@ -98,31 +103,9 @@ app.all('/callback', (req, res) => {
   }
 
   if (isAuthenticated && user) {
-    console.log('✅ User successfully authenticated');
-    console.log('User data:', {
-      id: user.sub,
-      email: user.email,
-      name: user.name,
-      picture: user.picture,
-      emailVerified: user.email_verified,
-    });
-
-    console.log('Set-Cookie headers:', res.get('Set-Cookie'));
-    console.log('Session ID after auth:', (req as any).sessionID);
-    console.log('Redirecting authenticated user to frontend');
-
     const frontendUrl = getEffectiveFrontendURL();
-    console.log('🔧 Environment variables:');
-    console.log('  NODE_ENV:', NODE_ENV);
-    console.log('  FRONTEND_URL:', FRONTEND_URL);
-    console.log('  DEV_FRONTEND_URL:', process.env.DEV_FRONTEND_URL);
-    console.log('📍 Callback redirecting to:', frontendUrl);
-
     return res.redirect(frontendUrl);
   } else {
-    console.log('❌ User not authenticated after callback');
-    console.log('Redirecting to frontend welcome page');
-
     const frontendUrl = getEffectiveFrontendURL();
     return res.redirect(`${frontendUrl}/welcome?error=authentication_failed`);
   }
@@ -131,14 +114,14 @@ app.all('/callback', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
-  // Health check endpoint
+// Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
+  res.status(200).json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  })
-})
+    environment: process.env.NODE_ENV ?? 'development',
+  });
+});
 
 if (NODE_ENV === 'development') {
   swaggerConfig(app, PORT);

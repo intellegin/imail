@@ -81,7 +81,7 @@ if (!hasValidAuth0Config) {
       cookie: {
         httpOnly: true,
         secure: isHttps,
-        sameSite: isHttps ? 'None' : 'Lax',
+        sameSite: 'None',
         path: '/',
       },
     },

@@ -72,8 +72,20 @@ router.get('/profile', requiresAuth, (req, res) => {
  *                   type: object
  */
 router.get('/verify', async (req, res) => {
-  const isAuthenticated = req.oidc?.isAuthenticated() || false;
-  const user = req.oidc?.user || null;
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0',
+    'Surrogate-Control': 'no-store',
+  });
+
+  console.log('Session data:', (req as any).session);
+  console.log('OIDC object:', req.oidc);
+  console.log('Cookies received:', req.cookies);
+  console.log('Headers origin:', req.get('origin'));
+
+  const isAuthenticated = req.oidc?.isAuthenticated() ?? false;
+  const user = req.oidc?.user ?? null;
 
   if (isAuthenticated && user) {
     try {
