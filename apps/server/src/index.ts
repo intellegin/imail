@@ -48,6 +48,8 @@ app.get('/callback', (req, res) => {
   console.log('Auth status:', req.oidc?.isAuthenticated());
   console.log('User:', req.oidc?.user);
   console.log('Access token available:', !!req.oidc?.accessToken);
+  console.log('Session ID:', (req as any).sessionID || 'N/A');
+  console.log('Cookies in request:', Object.keys(req.cookies || {}));
 
   const isAuthenticated = req.oidc?.isAuthenticated() || false;
   const user = req.oidc?.user || null;
@@ -73,6 +75,7 @@ app.get('/callback', (req, res) => {
       emailVerified: user.email_verified,
     });
 
+    console.log('Response headers being set:', res.getHeaders());
     console.log('Redirecting authenticated user to frontend');
     return res.redirect(FRONTEND_URL);
   } else {

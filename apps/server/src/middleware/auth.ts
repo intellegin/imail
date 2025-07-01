@@ -88,7 +88,7 @@ if (!hasValidAuth0Config) {
         cookie: {
           httpOnly: true,
           secure: isHttps,
-          sameSite: isHttps ? 'none' : 'lax',
+          sameSite: isHttps ? 'None' : 'Lax',
         },
       },
       routes: {
@@ -137,7 +137,7 @@ if (!hasValidAuth0Config) {
             cookie: {
               httpOnly: true,
               secure: isHttps,
-              sameSite: isHttps ? 'none' : 'lax',
+              sameSite: isHttps ? 'None' : 'Lax',
             },
           },
           routes: {
@@ -146,12 +146,14 @@ if (!hasValidAuth0Config) {
             callback: '/callback',
             postLogoutRedirect: frontendURL,
           },
-          ...(isHttps ? {} : { 
-            authorizationParams: {
-              response_mode: 'query',
-              scope: 'openid profile email',
-            }
-          }),
+          ...(isHttps
+            ? {}
+            : {
+                authorizationParams: {
+                  response_mode: 'query',
+                  scope: 'openid profile email',
+                },
+              }),
         };
 
         console.log(

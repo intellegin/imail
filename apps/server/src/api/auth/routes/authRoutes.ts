@@ -78,7 +78,7 @@ router.get('/verify', async (req, res) => {
   console.log('=== Auth Verification Debug ===');
   console.log('Authentication status:', isAuthenticated);
   console.log('User present:', !!user);
-  console.log('Session ID:', req?.sessionID);
+  console.log('Session ID:', (req as any).sessionID || 'N/A');
   console.log('Cookies received:', Object.keys(req.cookies || {}));
   console.log('Headers origin:', req.get('origin'));
   console.log('Headers referer:', req.get('referer'));
