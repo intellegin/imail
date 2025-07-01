@@ -79,6 +79,7 @@ if (!hasValidAuth0Config) {
         httpOnly: true,
         secure: isHttps,
         sameSite: isHttps ? 'None' : 'Lax',
+        path: '/',
       },
     },
     routes: {

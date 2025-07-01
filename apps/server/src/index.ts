@@ -76,6 +76,7 @@ app.get('/callback', (req, res) => {
     });
 
     console.log('Response headers being set:', res.getHeaders());
+    console.log('Set-Cookie headers:', res.get('Set-Cookie'));
     console.log('Redirecting authenticated user to frontend');
     return res.redirect(FRONTEND_URL);
   } else {
