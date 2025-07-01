@@ -75,8 +75,13 @@ router.get('/verify', async (req, res) => {
   const isAuthenticated = req.oidc?.isAuthenticated() || false;
   const user = req.oidc?.user || null;
 
+  console.log('=== Auth Verification Debug ===');
   console.log('Authentication status:', isAuthenticated);
   console.log('User present:', !!user);
+  console.log('Session ID:', req?.sessionID);
+  console.log('Cookies received:', Object.keys(req.cookies || {}));
+  console.log('Headers origin:', req.get('origin'));
+  console.log('Headers referer:', req.get('referer'));
 
   if (isAuthenticated && user) {
     try {

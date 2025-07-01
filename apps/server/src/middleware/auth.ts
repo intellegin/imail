@@ -85,6 +85,11 @@ if (!hasValidAuth0Config) {
         name: 'imail-session',
         rolling: true,
         rollingDuration: 24 * 60 * 60,
+        cookie: {
+          httpOnly: true,
+          secure: isHttps,
+          sameSite: isHttps ? 'none' : 'lax',
+        },
       },
       routes: {
         login: '/login',
@@ -129,6 +134,11 @@ if (!hasValidAuth0Config) {
             name: 'imail-session',
             rolling: true,
             rollingDuration: 24 * 60 * 60,
+            cookie: {
+              httpOnly: true,
+              secure: isHttps,
+              sameSite: isHttps ? 'none' : 'lax',
+            },
           },
           routes: {
             login: '/login',
@@ -136,7 +146,6 @@ if (!hasValidAuth0Config) {
             callback: '/callback',
             postLogoutRedirect: frontendURL,
           },
-          // Fix response_mode for HTTP vs HTTPS
           ...(isHttps ? {} : { 
             authorizationParams: {
               response_mode: 'query',
