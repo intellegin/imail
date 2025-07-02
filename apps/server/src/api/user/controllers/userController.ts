@@ -32,7 +32,7 @@ export const getAllUsers: RequestHandler = asyncHandler(
 export const getUserById: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const requestingUser = req.oidc?.user;
+    const requestingUser = req.user;
 
     if (!requestingUser) {
       res.status(401).json({ success: false, error: 'User not authenticated' });
@@ -66,7 +66,7 @@ export const getUserById: RequestHandler = asyncHandler(
 export const getUserByAuth0Id: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { auth0_id } = req.params;
-    const requestingUser = req.oidc?.user;
+    const requestingUser = req.user;
 
     if (!requestingUser) {
       res.status(401).json({ success: false, error: 'User not authenticated' });
@@ -145,7 +145,7 @@ export const updateUser: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     const updateData = req.body;
-    const requestingUser = req.oidc?.user;
+    const requestingUser = req.user;
 
     if (!requestingUser) {
       res.status(401).json({ success: false, error: 'User not authenticated' });
@@ -184,7 +184,7 @@ export const updateUser: RequestHandler = asyncHandler(
 export const deleteUser: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const requestingUser = req.oidc?.user;
+    const requestingUser = req.user;
 
     if (!requestingUser) {
       res.status(401).json({ success: false, error: 'User not authenticated' });

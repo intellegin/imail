@@ -1,8 +1,6 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-
-if (!API_BASE_URL) {
-  throw new Error('API_BASE_URL is not set')
-}
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  'https://imail-production.up.railway.app/api'
 
 export const apiRequest = async <T>(
   endpoint: string,
@@ -19,7 +17,6 @@ export const apiRequest = async <T>(
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     headers,
-    credentials: 'include',
     ...options,
   })
 

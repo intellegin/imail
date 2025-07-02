@@ -2,7 +2,7 @@ import { Inbox } from 'lucide-react'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { LoginButton, StoragePermissionAlert } from '@/components/atoms'
+import { LoginButton } from '@/components/atoms'
 import {
   Card,
   CardContent,
@@ -11,16 +11,9 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
-import { useStoragePermission } from '@/hooks'
 
 const WelcomePage = () => {
   const { isAuthenticated, isLoading } = useAuth()
-  const {
-    showPermissionAlert,
-    setShowPermissionAlert,
-    handlePermissionAllow,
-    handlePermissionDeny,
-  } = useStoragePermission()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -66,14 +59,6 @@ const WelcomePage = () => {
         <p className="text-center text-sm text-muted-foreground">
           © {new Date().getFullYear()} iMAIL. All Rights Reserved.
         </p>
-
-        <StoragePermissionAlert
-          isOpen={showPermissionAlert}
-          onOpenChange={setShowPermissionAlert}
-          onAllow={handlePermissionAllow}
-          onDeny={handlePermissionDeny}
-          appName="iMAIL"
-        />
       </div>
     </div>
   )

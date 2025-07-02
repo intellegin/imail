@@ -10,7 +10,7 @@ export interface CustomUser {
 declare global {
   namespace Express {
     interface Request {
-      user?: CustomUser;
+      user?: any;
     }
   }
 }

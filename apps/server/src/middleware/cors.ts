@@ -15,7 +15,8 @@ const getAllowedOrigins = (): string[] => {
     if (FRONTEND_URL) {
       origins.push(FRONTEND_URL);
     }
-    origins.push('https://imailapp.vercel.app');
+    const productionUrl = process.env.FRONTEND_URL ?? '';
+    origins.push(productionUrl);
     if (process.env.CORS_ADDITIONAL_ORIGINS) {
       origins.push(...process.env.CORS_ADDITIONAL_ORIGINS.split(','));
     }
@@ -36,39 +37,21 @@ const getAllowedOrigins = (): string[] => {
 
 const allowedOrigins = getAllowedOrigins();
 
-console.log('=== CORS Configuration ===');
-console.log('Environment:', NODE_ENV);
-console.log('Frontend URL:', FRONTEND_URL);
-console.log('Auth0 Issuer URL:', AUTH0_ISSUER_BASE_URL);
-console.log('Allowed Origins:', allowedOrigins);
-
 const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
-    if (NODE_ENV === 'development') {
-      console.log(
-        `🔍 CORS: Checking origin: ${JSON.stringify(origin)} (type: ${typeof origin})`
-      );
-    }
-
     if (!origin || origin === 'null') {
-      console.log(
-        '🌐 CORS: Request with no origin (mobile/native/direct) - ALLOWED'
-      );
       return callback(null, true);
     }
 
     if (allowedOrigins.includes(origin)) {
-      console.log(`✅ CORS: Allowed origin: ${origin}`);
       return callback(null, true);
     }
 
     if (NODE_ENV === 'development' && origin.includes('localhost')) {
-      console.log(`⚠️ CORS: Dev mode - allowing localhost: ${origin}`);
       return callback(null, true);
     }
 
-    console.error(`❌ CORS: Blocked origin: ${origin}`);
-    console.error('Allowed origins:', allowedOrigins);
+    console.error(`❌ CORS blocked: ${origin}`);
     callback(new Error(`CORS policy violation: Origin ${origin} not allowed`));
   },
   credentials: true,

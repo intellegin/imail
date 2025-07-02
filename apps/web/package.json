@@ -17,6 +17,7 @@
     "clean": "rm -rf dist build .next"
   },
   "dependencies": {
+    "@auth0/auth0-spa-js": "^2.2.0",
     "@hookform/resolvers": "^5.1.1",
     "@imail/shared": "workspace:*",
     "@radix-ui/react-checkbox": "^1.3.2",

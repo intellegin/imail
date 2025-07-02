@@ -1,115 +1,48 @@
 import { RequestHandler } from 'express';
-import { auth, requiresAuth as oidcRequiresAuth } from 'express-openid-connect';
 
-const baseURL = process.env.BASE_URL;
-const clientID = process.env.AUTH0_CLIENT_ID;
-const issuerBaseURL = process.env.AUTH0_ISSUER_BASE_URL;
-const secret = process.env.SESSION_SECRET;
-const frontendURL = process.env.FRONTEND_URL ?? '';
-const nodeEnv = process.env.NODE_ENV ?? 'development';
+let jwtVerify: any;
+let createRemoteJWKSet: any;
+let JWKS: any;
 
-const getEffectiveFrontendURL = () => {
-  if (nodeEnv === 'development') {
-    return process.env.DEV_FRONTEND_URL || 'http://localhost:5173';
+async function initJose() {
+  if (!jwtVerify) {
+    const jose = await import('jose');
+    jwtVerify = jose.jwtVerify;
+    createRemoteJWKSet = jose.createRemoteJWKSet;
+    const auth0Domain = process.env.AUTH0_ISSUER_BASE_URL ?? '';
+    JWKS = createRemoteJWKSet(new URL(`${auth0Domain}/.well-known/jwks.json`));
   }
-  return frontendURL;
+  return { jwtVerify, JWKS };
+}
+
+const authMiddleware: RequestHandler = (req, res, next) => {
+  next();
 };
 
-console.log('=== Auth0 Configuration ===');
-console.log('baseURL:', baseURL ?? 'AUTO-DETECT');
-console.log('clientID:', clientID ? 'SET' : 'NOT SET');
-console.log('issuerBaseURL:', issuerBaseURL ? 'SET' : 'NOT SET');
-console.log('secret:', secret ? 'SET' : 'NOT SET');
-console.log('configured frontendURL:', frontendURL);
-console.log('effective frontendURL:', getEffectiveFrontendURL());
-console.log('environment:', nodeEnv);
+const requiresAuth: RequestHandler = async (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
 
-if (!clientID) {
-  console.error('❌ AUTH0_CLIENT_ID environment variable is required');
-  console.warn('🔧 Server will start without Auth0 authentication');
-}
-
-if (!issuerBaseURL) {
-  console.error('❌ AUTH0_ISSUER_BASE_URL environment variable is required');
-  console.warn('🔧 Server will start without Auth0 authentication');
-}
-
-if (!secret) {
-  console.error('❌ SESSION_SECRET environment variable is required');
-  console.warn('🔧 Server will start without Auth0 authentication');
-}
-
-const hasValidAuth0Config = clientID && issuerBaseURL && secret;
-
-let authMiddleware: RequestHandler;
-
-if (!hasValidAuth0Config) {
-  console.warn('⚠️  Auth0 configuration incomplete - using mock middleware');
-
-  authMiddleware = (req, _res, next) => {
-    (req as any).oidc = {
-      isAuthenticated: () => false,
-      user: undefined,
-      accessToken: undefined,
-      refreshToken: undefined,
-      idToken: undefined,
-      idTokenClaims: undefined,
-    };
-    next();
-  };
-} else {
-  if (secret!.length < 32) {
-    console.warn(
-      '⚠️  SESSION_SECRET should be at least 32 characters long for security'
-    );
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
   }
 
-  const effectiveBaseURL = baseURL ?? 'http://localhost:3000';
-  const isHttps = effectiveBaseURL.startsWith('https://');
+  try {
+    const { jwtVerify: verify, JWKS: jwks } = await initJose();
+    const auth0Domain =
+      process.env.AUTH0_DOMAIN ?? 'https://intellegin.us.auth0.com';
+    const auth0Audience =
+      process.env.AUTH0_AUDIENCE ?? `${auth0Domain}/api/v2/`;
+    const { payload } = await verify(token, jwks, {
+      issuer: `${auth0Domain}/`,
+      audience: auth0Audience,
+    });
 
-  const config = {
-    authRequired: false,
-    auth0Logout: true,
-    baseURL: effectiveBaseURL,
-    clientID,
-    issuerBaseURL,
-    secret,
-    session: {
-      name: 'imail-session',
-      rolling: true,
-      rollingDuration: 24 * 60 * 60,
-      cookie: {
-        httpOnly: true,
-        secure: isHttps,
-        sameSite: nodeEnv === 'production' ? 'None' : 'Lax',
-        path: '/',
-        domain: nodeEnv === 'production' ? undefined : undefined, // Let browser set domain automatically
-      },
-    },
-    routes: {
-      login: '/login',
-      logout: '/logout',
-      callback: '/callback',
-      postLogoutRedirect: getEffectiveFrontendURL(),
-    },
-    authorizationParams: {
-      scope: 'openid profile email',
-    },
-    attemptSilentLogin: false,
-  };
+    req.user = payload;
+    next();
+  } catch (err) {
+    console.error('JWT verification failed:', err);
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+};
 
-  console.log('✅ Auth0 configured:', effectiveBaseURL);
-  console.log('🔒 Protocol:', isHttps ? 'HTTPS' : 'HTTP');
-  console.log(
-    '🍪 Cookie config - Secure:',
-    isHttps,
-    'SameSite:',
-    nodeEnv === 'production' ? 'None' : 'Lax'
-  );
-
-  authMiddleware = auth(config);
-}
-
-export { authMiddleware };
-
-export const requiresAuth: RequestHandler = oidcRequiresAuth();
+export { authMiddleware, requiresAuth };

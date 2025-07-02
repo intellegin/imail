@@ -42,6 +42,4 @@ export const swaggerConfig = (app: Express, port: number): void => {
 
   const specs = swaggerJsdoc(swaggerOptions);
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-
-  console.log(`📚 API documentation: http://localhost:${port}/api-docs`);
 };

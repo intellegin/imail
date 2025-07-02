@@ -1,209 +1,71 @@
 import express, { Router } from 'express';
 
 import { requiresAuth } from '../../../middleware/auth';
-import { Auth0User } from '../../../types/user';
+import { Auth0Service } from '../../../services/auth0Service';
+import {
+  mapAuth0ProfileToUserData,
+  validateUserData,
+} from '../../../utils/userMapper';
 import { UserService } from '../../user/services/userService';
+import '../../../types/auth';
 
 const router: Router = express.Router();
 
-function extractUserData(auth0User: Auth0User) {
-  return {
-    auth0_id: auth0User.sub,
-    email: auth0User.email,
-    full_name: auth0User.name ?? null,
-    given_name: auth0User.given_name ?? null,
-    family_name: auth0User.family_name ?? null,
-    picture_url: auth0User.picture ?? null,
-    email_verified: auth0User.email_verified ?? false,
-    user_metadata: auth0User.user_metadata ?? null,
-    app_metadata: auth0User.app_metadata ?? null,
-  };
-}
-
-/**
- * @swagger
- * /api/auth/profile:
- *   get:
- *     summary: Get user profile
- *     tags: [Auth]
- *     security:
- *       - oidc: []
- *     responses:
- *       200:
- *         description: User profile data
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 user:
- *                   type: object
- *       401:
- *         description: Unauthorized - User not authenticated
- */
-router.get('/profile', requiresAuth, (req, res) => {
-  console.log('User:', req.oidc?.user);
-
-  res.json({
-    message: 'Protected profile endpoint',
-    user: req.oidc?.user || null,
-  });
-});
-
-/**
- * @swagger
- * /api/auth/verify:
- *   get:
- *     summary: Check authentication status
- *     tags: [Auth]
- *     responses:
- *       200:
- *         description: Authentication status
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 authenticated:
- *                   type: boolean
- *                 user:
- *                   type: object
- */
-router.get('/verify', async (req, res) => {
-  res.set({
-    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-    Pragma: 'no-cache',
-    Expires: '0',
-    'Surrogate-Control': 'no-store',
-    // Enable third-party cookie access for auth verification
-    'Access-Control-Allow-Credentials': 'true',
-    'Set-Cookie-SameSite': 'None',
-    // Request storage access for third-party cookies
-    'Document-Policy': 'js-profiling',
-  });
-
-  const isAuthenticated = req.oidc?.isAuthenticated() ?? false;
-  const user = req.oidc?.user ?? null;
-
-  if (isAuthenticated && user) {
-    try {
-      const userData = extractUserData(user as Auth0User);
-      await UserService.upsertUserOnLogin(userData);
-    } catch (error) {
-      console.error('Failed to save user to Supabase:', error);
-    }
-  }
-
-  res.json({
-    authenticated: isAuthenticated,
-    user: isAuthenticated
-      ? {
-          id: user?.sub,
-          email: user?.email,
-          name: user?.name,
-          picture: user?.picture,
-          emailVerified: user?.email_verified,
-        }
-      : null,
-  });
-});
-
-/**
- * @swagger
- * /api/auth/logout:
- *   post:
- *     summary: Logout user and update status
- *     tags: [Auth]
- *     security:
- *       - oidc: []
- *     responses:
- *       200:
- *         description: User logged out successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- */
-router.post('/logout', async (req, res) => {
-  const user = req.oidc?.user;
-
-  if (user) {
-    try {
-      await UserService.updateUserStatusOnLogout(user.sub);
-      console.log('✅ User status updated to inactive on logout:', user.sub);
-    } catch (error) {
-      console.error('❌ Failed to update user status on logout:', error);
-    }
-  }
-
-  res.json({
-    message: 'Logout processed successfully',
-  });
-});
-
-/**
- * @swagger
- * /api/auth/me:
- *   get:
- *     summary: Get current user's full profile from Supabase
- *     tags: [Auth]
- *     security:
- *       - oidc: []
- *     responses:
- *       200:
- *         description: User profile data from Supabase
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   $ref: '#/components/schemas/User'
- *       404:
- *         description: User not found in database
- *       401:
- *         description: Unauthorized - User not authenticated
- */
-router.get('/me', requiresAuth, async (req, res) => {
-  const user = req.oidc?.user;
-
-  if (!user) {
-    res.status(401).json({
-      success: false,
-      error: 'User not authenticated',
-    });
-    return;
-  }
+router.get('/verify', requiresAuth, async (req, res) => {
+  const jwtPayload = req.user as any;
 
   try {
-    const supabaseUser = await UserService.getUserByAuth0Id(user.sub);
+    const authHeader = req.headers.authorization;
+    const accessToken = authHeader?.replace('Bearer ', '');
 
-    if (!supabaseUser) {
-      res.status(404).json({
-        success: false,
-        error: 'User not found in database',
-      });
-      return;
+    if (!accessToken) {
+      return res.status(401).json({ error: 'No access token provided' });
     }
 
+    const userProfile = await Auth0Service.getUserProfile(accessToken);
+    const userData = mapAuth0ProfileToUserData(jwtPayload, userProfile);
+    validateUserData(userData);
+    await UserService.upsertUserOnLogin(userData);
+
+    console.log(`✅ User verified and upserted: ${userData.email}`);
+
     res.json({
-      success: true,
-      data: supabaseUser,
+      authenticated: true,
+      user: {
+        id: jwtPayload.sub,
+        email: userProfile.email,
+        name: userProfile.name,
+        picture: userProfile.picture,
+        emailVerified: userProfile.email_verified,
+      },
     });
   } catch (error) {
-    console.error('❌ Failed to fetch user profile:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch user profile',
-    });
+    console.error(
+      '❌ User verification failed:',
+      error instanceof Error ? error.message : error
+    );
+
+    if (error instanceof Error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+router.get('/me', requiresAuth, (req, res) => {
+  const user = req.user as any;
+
+  res.json({
+    success: true,
+    data: {
+      auth0_id: user.sub,
+      email: user.email,
+      full_name: user.name,
+      picture_url: user.picture,
+      email_verified: user.email_verified,
+    },
+  });
 });
 
 export default router;

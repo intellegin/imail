@@ -2,7 +2,6 @@ import { query, queryWithUser, queryAsSystem } from '../../../db/postgres';
 import { User, UpsertUserData } from '../../../types/user';
 
 export class UserService {
-  // GET methods
   static async getAllUsers(limit = 30, skip = 0): Promise<User[]> {
     try {
       const result = await query(
@@ -75,7 +74,6 @@ export class UserService {
     }
   }
 
-  // POST methods
   static async upsertUserOnLogin(userData: UpsertUserData): Promise<User> {
     try {
       const result = await queryAsSystem(
@@ -111,7 +109,6 @@ export class UserService {
     }
   }
 
-  // PUT methods
   static async updateUser(
     id: number,
     updateData: Partial<UpsertUserData>,
@@ -149,7 +146,6 @@ export class UserService {
     }
   }
 
-  // DELETE methods
   static async deleteUser(
     id: number,
     requestingUserAuth0Id: string
