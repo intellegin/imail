@@ -1,7 +1,7 @@
 import express, { Router } from 'express';
 
 import { requiresAuth } from '../../../middleware/auth';
-import { Auth0Service } from '../../../services/auth0Service';
+import { Auth0Service } from '../services/auth0Service';
 import {
   mapAuth0ProfileToUserData,
   validateUserData,

@@ -2,6 +2,10 @@ import { Router } from 'express';
 
 import { requiresAuth } from '../../../middleware/auth';
 import {
+  requirePermission,
+  attachUserPermissions,
+} from '../../../middleware/rbac';
+import {
   getAllUsers,
   getUserById,
   getUserByAuth0Id,
@@ -11,6 +15,10 @@ import {
 } from '../controllers/userController';
 
 const router: Router = Router();
+
+// Apply authentication and attach permissions to all routes
+router.use(requiresAuth);
+router.use(attachUserPermissions);
 
 /**
  * @swagger
@@ -40,7 +48,7 @@ const router: Router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', requiresAuth, getAllUsers);
+router.get('/', requirePermission('users', 'read'), getAllUsers);
 
 /**
  * @swagger
@@ -65,7 +73,7 @@ router.get('/', requiresAuth, getAllUsers);
  *       404:
  *         description: User not found
  */
-router.get('/:id', getUserById);
+router.get('/:id', requirePermission('users', 'read'), getUserById);
 
 /**
  * @swagger
@@ -91,6 +99,22 @@ router.get('/:id', getUserById);
  *         description: User not found
  */
 router.get('/auth0/:auth0_id', getUserByAuth0Id);
+
+/**
+ * @swagger
+ * /api/users/me:
+ *   get:
+ *     summary: Get current user's profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user's profile
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/me', requirePermission('profile', 'read'), getUserByAuth0Id);
 
 /**
  * @swagger
@@ -133,7 +157,7 @@ router.get('/auth0/:auth0_id', getUserByAuth0Id);
  *       401:
  *         description: Unauthorized
  */
-router.post('/', createUser);
+router.post('/', requirePermission('users', 'write'), createUser);
 
 /**
  * @swagger
@@ -180,7 +204,7 @@ router.post('/', createUser);
  *       404:
  *         description: User not found
  */
-router.put('/:id', updateUser);
+router.put('/:id', requirePermission('users', 'write'), updateUser);
 
 /**
  * @swagger
@@ -205,6 +229,18 @@ router.put('/:id', updateUser);
  *       404:
  *         description: User not found
  */
-router.delete('/:id', deleteUser);
+router.delete('/:id', requirePermission('users', 'delete'), deleteUser);
+
+// Admin-only routes using role-based access
+// TODO: Add these routes when RBAC controller methods are implemented
+// router.post('/:id/assign-role', 
+//   requireRole('Admin'), 
+//   userController.assignRoleToUser
+// );
+
+// router.delete('/:id/remove-role/:roleName', 
+//   requireRole('Admin'), 
+//   userController.removeRoleFromUser
+// );
 
 export default router;

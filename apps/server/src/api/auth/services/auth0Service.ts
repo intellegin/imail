@@ -11,12 +11,12 @@ interface Auth0UserProfile {
 }
 
 export class Auth0Service {
-  private static readonly AUTH0_DOMAIN =
-    process.env.AUTH0_DOMAIN || 'https://intellegin.us.auth0.com';
+  private static readonly AUTH0_ISSUER_BASE_URL =
+    process.env.AUTH0_ISSUER_BASE_URL ?? 'https://intellegin.us.auth0.com';
 
   static async getUserProfile(accessToken: string): Promise<Auth0UserProfile> {
     const { default: fetch } = await import('node-fetch');
-    const response = await fetch(`${this.AUTH0_DOMAIN}/userinfo`, {
+    const response = await fetch(`${this.AUTH0_ISSUER_BASE_URL}/userinfo`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

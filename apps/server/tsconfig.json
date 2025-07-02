@@ -13,8 +13,8 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@imail/shared": ["../../packages/shared/src"],
-      "@imail/shared/*": ["../../packages/shared/src/*"]
+      "@imail/shared": ["../../packages/shared/dist"],
+      "@imail/shared/*": ["../../packages/shared/dist/*"]
     }
   },
   "include": ["src/**/*"],

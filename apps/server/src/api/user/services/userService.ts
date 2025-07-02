@@ -1,4 +1,6 @@
-import { query, queryWithUser, queryAsSystem } from '../../../db/postgres';
+import { query, queryWithUser, queryAsSystem } from '@imail/shared';
+import { RBACService } from '../../auth/services/rbacService';
+import { ROLES } from '../../../types/rbac';
 import { User, UpsertUserData } from '../../../types/user';
 
 export class UserService {
@@ -76,6 +78,13 @@ export class UserService {
 
   static async upsertUserOnLogin(userData: UpsertUserData): Promise<User> {
     try {
+      const existingUser = await queryAsSystem(
+        'SELECT id FROM users WHERE auth0_id = $1',
+        [userData.auth0_id]
+      );
+
+      const isNewUser = existingUser.rows.length === 0;
+
       const result = await queryAsSystem(
         `INSERT INTO users (auth0_id, email, full_name, given_name, family_name, picture_url, email_verified, is_active, role, user_metadata, app_metadata)
          VALUES ($1, $2, $3, $4, $5, $6, $7, true, 'user', $8, $9)
@@ -103,7 +112,66 @@ export class UserService {
           userData.app_metadata ?? {},
         ]
       );
-      return result.rows[0];
+
+      const user = result.rows[0];
+
+      try {
+        const userRoles = await queryAsSystem(
+          'SELECT COUNT(*) as role_count FROM user_roles WHERE user_id = $1',
+          [user.id]
+        );
+
+        const hasRoles = userRoles.rows[0]?.role_count > 0;
+
+        console.log(
+          `🔍 User ${user.email} (ID: ${user.id}) role check: ${hasRoles ? 'has roles' : 'no roles'}`
+        );
+
+        if (!hasRoles) {
+          console.log(
+            `🎯 Attempting to assign Student role to user ${user.email} (ID: ${user.id})`
+          );
+
+          const roleAssigned = await RBACService.assignRole(
+            user.id.toString(),
+            ROLES.STUDENT
+          );
+
+          if (roleAssigned) {
+            console.log(
+              `✅ Successfully assigned Student role to user: ${user.email} (${isNewUser ? 'new user' : 'existing user without roles'})`
+            );
+
+            // Verify the assignment worked
+            const verifyRoles = await queryAsSystem(
+              'SELECT COUNT(*) as role_count FROM user_roles WHERE user_id = $1',
+              [user.id]
+            );
+            console.log(
+              `✔️ Verification: User ${user.email} now has ${verifyRoles.rows[0]?.role_count} role(s)`
+            );
+          } else {
+            console.error(
+              `❌ Failed to assign Student role to user ${user.email} (ID: ${user.id}): Role assignment returned false. Check if Student role exists in roles table.`
+            );
+          }
+        } else if (isNewUser) {
+          console.log(
+            `ℹ️ New user ${user.email} already has ${userRoles.rows[0]?.role_count} role(s) assigned`
+          );
+        } else {
+          console.log(
+            `ℹ️ Existing user ${user.email} has ${userRoles.rows[0]?.role_count} role(s), no action needed`
+          );
+        }
+      } catch (roleError) {
+        console.error(
+          `❌ Error checking/assigning Student role to user ${user.email}:`,
+          roleError
+        );
+      }
+
+      return user;
     } catch (error) {
       throw new Error(`Failed to upsert user: ${error}`);
     }
