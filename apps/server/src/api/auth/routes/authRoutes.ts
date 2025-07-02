@@ -77,6 +77,11 @@ router.get('/verify', async (req, res) => {
     Pragma: 'no-cache',
     Expires: '0',
     'Surrogate-Control': 'no-store',
+    // Enable third-party cookie access for auth verification
+    'Access-Control-Allow-Credentials': 'true',
+    'Set-Cookie-SameSite': 'None',
+    // Request storage access for third-party cookies
+    'Document-Policy': 'js-profiling',
   });
 
   const isAuthenticated = req.oidc?.isAuthenticated() ?? false;

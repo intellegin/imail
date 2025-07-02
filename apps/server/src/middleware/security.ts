@@ -7,36 +7,47 @@ export const securityHeaders = (
   res: Response,
   next: NextFunction
 ) => {
-  // Security headers for production
   if (NODE_ENV === 'production') {
-    // Prevent clickjacking
     res.setHeader('X-Frame-Options', 'DENY');
 
-    // Prevent MIME type sniffing
     res.setHeader('X-Content-Type-Options', 'nosniff');
 
-    // XSS Protection
     res.setHeader('X-XSS-Protection', '1; mode=block');
 
-    // Referrer Policy
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-    // Content Security Policy (basic)
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
     );
+
+    res.setHeader(
+      'Permissions-Policy',
+      'cross-origin-isolated=(), same-origin-allow-popups=(), storage-access=()'
+    );
+
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  } else {
+    res.setHeader(
+      'Permissions-Policy',
+      'cross-origin-isolated=*, same-origin-allow-popups=*, storage-access=*'
+    );
+    res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+
+    if (req.path.includes('/auth/')) {
+      console.log(
+        '🍪 Third-party cookie permissions enabled for auth route:',
+        req.path
+      );
+    }
   }
 
   next();
 };
 
-export const corsDebugger = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  // Only debug CORS in development
+export const corsDebugger = (req: Request, res: Response, next: NextFunction) => {
   if (NODE_ENV === 'development') {
     const origin = req.get('Origin');
     const method = req.method;

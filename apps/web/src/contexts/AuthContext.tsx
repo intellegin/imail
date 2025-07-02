@@ -24,6 +24,10 @@ interface AuthContextType {
   loginWithRedirect: () => void
   logout: () => Promise<void>
   getAccessTokenSilently: () => Promise<string>
+  requestStorageAccess: () => Promise<boolean>
+  showPermissionAlert: boolean
+  setShowPermissionAlert: (show: boolean) => void
+  needsStorageAccess: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -40,15 +44,76 @@ interface AuthProviderProps {
   children: React.ReactNode
 }
 
+const requestStorageAccessPermission = async (): Promise<boolean> => {
+  if (!('requestStorageAccess' in document)) {
+    console.log('🍪 Storage Access API not supported in this browser')
+    return true
+  }
+
+  try {
+    const hasAccess = await document.hasStorageAccess()
+    if (hasAccess) {
+      console.log('✅ Already have storage access')
+      return true
+    }
+
+    console.log('🍪 Requesting storage access permission...')
+    await document.requestStorageAccess()
+    console.log('✅ Storage access granted!')
+    return true
+  } catch (error) {
+    console.error('❌ Storage access denied or failed:', error)
+    return false
+  }
+}
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [showPermissionAlert, setShowPermissionAlert] = useState(false)
+  const [needsStorageAccess, setNeedsStorageAccess] = useState(false)
   const serverBaseUrl = import.meta.env.VITE_SERVER_BASE_URL ?? ''
+
+  const requestStorageAccess = useCallback(async () => {
+    return await requestStorageAccessPermission()
+  }, [])
+
+  useEffect(() => {
+    const checkStorageAccess = async () => {
+      if ('requestStorageAccess' in document) {
+        try {
+          const hasAccess = await document.hasStorageAccess()
+          if (!hasAccess) {
+            setNeedsStorageAccess(true)
+            if (!isAuthenticated) {
+              setShowPermissionAlert(true)
+            }
+          } else {
+            setNeedsStorageAccess(false)
+          }
+        } catch (error) {
+          console.warn('Could not check storage access:', error)
+          setNeedsStorageAccess(false)
+        }
+      } else {
+        setNeedsStorageAccess(false)
+      }
+    }
+
+    checkStorageAccess()
+  }, [isAuthenticated])
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        const hasStorageAccess = await requestStorageAccessPermission()
+        if (!hasStorageAccess) {
+          console.warn(
+            '⚠️ Storage access denied - cookies may not work properly'
+          )
+        }
+
         const response = await fetch(
           `${serverBaseUrl}${API_ENDPOINTS.AUTH.VERIFY}`,
           {
@@ -92,7 +157,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     checkAuth()
   }, [serverBaseUrl])
 
-  const loginWithRedirect = useCallback(() => {
+  const loginWithRedirect = useCallback(async () => {
+    // Request storage access before login
+    const hasStorageAccess = await requestStorageAccessPermission()
+    if (!hasStorageAccess) {
+      console.warn('⚠️ Storage access denied - login may not work properly')
+    }
+
     window.location.href = `${serverBaseUrl}${API_ENDPOINTS.AUTH.LOGIN}`
   }, [serverBaseUrl])
 
@@ -132,6 +203,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       loginWithRedirect,
       logout,
       getAccessTokenSilently,
+      requestStorageAccess,
+      showPermissionAlert,
+      setShowPermissionAlert,
+      needsStorageAccess,
     }),
     [
       isAuthenticated,
@@ -140,6 +215,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       loginWithRedirect,
       logout,
       getAccessTokenSilently,
+      requestStorageAccess,
+      showPermissionAlert,
+      needsStorageAccess,
     ]
   )
 

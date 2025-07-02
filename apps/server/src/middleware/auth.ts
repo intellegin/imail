@@ -81,8 +81,9 @@ if (!hasValidAuth0Config) {
       cookie: {
         httpOnly: true,
         secure: isHttps,
-        sameSite: isHttps ? 'None' : 'Lax',
+        sameSite: nodeEnv === 'production' ? 'None' : 'Lax',
         path: '/',
+        domain: nodeEnv === 'production' ? undefined : undefined, // Let browser set domain automatically
       },
     },
     routes: {
@@ -99,6 +100,12 @@ if (!hasValidAuth0Config) {
 
   console.log('✅ Auth0 configured:', effectiveBaseURL);
   console.log('🔒 Protocol:', isHttps ? 'HTTPS' : 'HTTP');
+  console.log(
+    '🍪 Cookie config - Secure:',
+    isHttps,
+    'SameSite:',
+    nodeEnv === 'production' ? 'None' : 'Lax'
+  );
 
   authMiddleware = auth(config);
 }

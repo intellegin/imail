@@ -15,6 +15,7 @@ const getAllowedOrigins = (): string[] => {
     if (FRONTEND_URL) {
       origins.push(FRONTEND_URL);
     }
+    origins.push('https://imailapp.vercel.app');
     if (process.env.CORS_ADDITIONAL_ORIGINS) {
       origins.push(...process.env.CORS_ADDITIONAL_ORIGINS.split(','));
     }
@@ -81,6 +82,7 @@ const corsOptions: CorsOptions = {
     'X-Requested-With',
     'X-HTTP-Method-Override',
     'Cache-Control',
+    'Access-Control-Allow-Credentials',
   ],
   exposedHeaders: [
     'Set-Cookie',
