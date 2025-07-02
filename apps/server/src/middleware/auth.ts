@@ -1,48 +1,92 @@
 import { RequestHandler } from 'express';
+import jwt from 'jsonwebtoken';
 
-let jwtVerify: any;
-let createRemoteJWKSet: any;
-let JWKS: any;
+const auth0Domain =
+  process.env.AUTH0_ISSUER_BASE_URL ?? 'https://intellegin.us.auth0.com';
 
-async function initJose() {
-  if (!jwtVerify) {
-    const jose = await import('jose');
-    jwtVerify = jose.jwtVerify;
-    createRemoteJWKSet = jose.createRemoteJWKSet;
-    const auth0Domain = process.env.AUTH0_ISSUER_BASE_URL ?? '';
-    JWKS = createRemoteJWKSet(new URL(`${auth0Domain}/.well-known/jwks.json`));
+let jwksClient: any = null;
+let client: any = null;
+
+async function initJwksClient() {
+  if (!jwksClient) {
+    jwksClient = (await import('jwks-client' as any)).default;
+    client = jwksClient({
+      jwksUri: `${auth0Domain}/.well-known/jwks.json`,
+      requestHeaders: {}, // Optional
+      timeout: 30000, // Defaults to 30s
+    });
   }
-  return { jwtVerify, JWKS };
+  return client;
+}
+
+function getKey(
+  header: any,
+  callback: (err: any, signingKey?: string) => void
+) {
+  initJwksClient()
+    .then(jwksClientInstance => {
+      jwksClientInstance.getSigningKey(header.kid, (err: any, key: any) => {
+        if (err) {
+          return callback(err);
+        }
+
+        let signingKey: string;
+
+        if (typeof key?.getPublicKey === 'function') {
+          signingKey = key.getPublicKey();
+        } else if (key?.publicKey) {
+          signingKey = key.publicKey;
+        } else if (key?.rsaPublicKey) {
+          signingKey = key.rsaPublicKey;
+        } else if (typeof key === 'string') {
+          signingKey = key;
+        } else {
+          console.log(
+            'Unexpected key structure:',
+            JSON.stringify(key, null, 2)
+          );
+          return callback(
+            new Error('Unable to extract public key from JWKS response')
+          );
+        }
+
+        callback(null, signingKey);
+      });
+    })
+    .catch(callback);
 }
 
 const authMiddleware: RequestHandler = (req, res, next) => {
   next();
 };
 
-const requiresAuth: RequestHandler = async (req, res, next) => {
+const requiresAuth: RequestHandler = (req, res, next) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
 
   if (!token) {
     return res.status(401).json({ error: 'No token provided' });
   }
 
-  try {
-    const { jwtVerify: verify, JWKS: jwks } = await initJose();
-    const auth0Domain =
-      process.env.AUTH0_DOMAIN ?? 'https://intellegin.us.auth0.com';
-    const auth0Audience =
-      process.env.AUTH0_AUDIENCE ?? `${auth0Domain}/api/v2/`;
-    const { payload } = await verify(token, jwks, {
-      issuer: `${auth0Domain}/`,
-      audience: auth0Audience,
-    });
+  const auth0Audience = process.env.AUTH0_AUDIENCE ?? `${auth0Domain}/api/v2/`;
 
-    req.user = payload;
-    next();
-  } catch (err) {
-    console.error('JWT verification failed:', err);
-    return res.status(401).json({ error: 'Invalid token' });
-  }
+  jwt.verify(
+    token,
+    getKey,
+    {
+      audience: auth0Audience,
+      issuer: `${auth0Domain}/`,
+      algorithms: ['RS256'],
+    },
+    (err, decoded) => {
+      if (err) {
+        console.error('JWT verification failed:', err);
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+
+      req.user = decoded;
+      next();
+    }
+  );
 };
 
 export { authMiddleware, requiresAuth };

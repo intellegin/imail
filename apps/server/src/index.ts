@@ -1,3 +1,19 @@
+try {
+  if (!globalThis.crypto) {
+    const { webcrypto } = require('node:crypto');
+    globalThis.crypto = webcrypto;
+  }
+} catch {
+  try {
+    const crypto = require('crypto');
+    if (!globalThis.crypto && crypto.webcrypto) {
+      globalThis.crypto = crypto.webcrypto;
+    }
+  } catch (fallbackError) {
+    console.warn('Could not polyfill crypto:', fallbackError);
+  }
+}
+
 import dotenv from 'dotenv';
 import express from 'express';
 
