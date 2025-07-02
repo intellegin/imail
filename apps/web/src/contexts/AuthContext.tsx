@@ -86,9 +86,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const hasAccess = await document.hasStorageAccess()
           if (!hasAccess) {
             setNeedsStorageAccess(true)
-            if (!isAuthenticated) {
-              setShowPermissionAlert(true)
-            }
           } else {
             setNeedsStorageAccess(false)
           }
@@ -107,13 +104,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const hasStorageAccess = await requestStorageAccessPermission()
-        if (!hasStorageAccess) {
-          console.warn(
-            '⚠️ Storage access denied - cookies may not work properly'
-          )
-        }
-
         const response = await fetch(
           `${serverBaseUrl}${API_ENDPOINTS.AUTH.VERIFY}`,
           {
@@ -157,13 +147,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     checkAuth()
   }, [serverBaseUrl])
 
-  const loginWithRedirect = useCallback(async () => {
-    // Request storage access before login
-    const hasStorageAccess = await requestStorageAccessPermission()
-    if (!hasStorageAccess) {
-      console.warn('⚠️ Storage access denied - login may not work properly')
-    }
-
+  const loginWithRedirect = useCallback(() => {
     window.location.href = `${serverBaseUrl}${API_ENDPOINTS.AUTH.LOGIN}`
   }, [serverBaseUrl])
 
