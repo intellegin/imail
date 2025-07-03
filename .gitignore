@@ -41,3 +41,6 @@ packages/db/data/
 *.sql.backup
 *.dump
 *.backup
+
+# Documentation build output
+docs/

@@ -19,7 +19,8 @@
     "db:stop": "docker-compose down",
     "db:reset": "docker-compose down -v && pnpm run db:start",
     "db:migrate": "cd packages/db && pnpm run migrate",
-    "migrate": "turbo migrate"
+    "migrate": "turbo migrate",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
     "turbo": "^2.4.0"
