@@ -13,9 +13,11 @@ import {
   ShoppingCart,
   Tag,
   Inbox,
+  Home,
 } from 'lucide-react'
 
 export const primaryNavigation = [
+  { name: 'Dashboard', icon: Home, path: '/' },
   { name: 'Inbox', icon: Inbox, path: '/inbox', count: 128 },
   { name: 'Drafts', icon: FileText, path: '/drafts', count: 9 },
   { name: 'Sent', icon: Send, path: '/sent' },

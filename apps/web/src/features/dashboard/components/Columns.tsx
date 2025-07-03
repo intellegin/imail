@@ -1,6 +1,8 @@
 import { ColumnDef } from '@tanstack/react-table'
 import { MoreHorizontal } from 'lucide-react'
 
+import { RoleBadge } from './RoleBadge'
+
 import { DataTableColumnHeader } from '@/components/atoms/DataTableColumnHeader'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -59,38 +61,14 @@ export const createColumns = (
     ),
   },
   {
-    accessorKey: 'phone',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Phone" />
-    ),
-  },
-  {
     accessorKey: 'role',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Role" />
     ),
     cell: ({ row }) => {
       const role = row.getValue('role') as string
-      return (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
-            role === 'admin'
-              ? 'bg-red-100 text-red-800'
-              : role === 'moderator'
-                ? 'bg-yellow-100 text-yellow-800'
-                : 'bg-green-100 text-green-800'
-          }`}
-        >
-          {role}
-        </span>
-      )
+      return <RoleBadge roles={role} />
     },
-  },
-  {
-    accessorKey: 'age',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Age" />
-    ),
   },
   {
     id: 'actions',

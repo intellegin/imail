@@ -6,8 +6,24 @@ import { User, UpsertUserData } from '../../../types/user';
 export class UserService {
   static async getAllUsers(limit = 30, skip = 0): Promise<User[]> {
     try {
+      // Get users with their roles from the RBAC system
       const result = await query(
-        'SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+        `SELECT 
+          u.id, u.created_at, u.auth0_id, u.email, u.full_name, 
+          u.given_name, u.family_name, u.picture_url, u.email_verified, 
+          u.is_active, u.user_metadata, u.app_metadata, u.updated_at,
+          COALESCE(
+            STRING_AGG(r.name, ', ' ORDER BY r.name), 
+            'No Role'
+          ) as role
+        FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+        LEFT JOIN roles r ON ur.role_id = r.id
+        GROUP BY u.id, u.created_at, u.auth0_id, u.email, u.full_name, 
+                 u.given_name, u.family_name, u.picture_url, u.email_verified, 
+                 u.is_active, u.user_metadata, u.app_metadata, u.updated_at
+        ORDER BY u.created_at DESC 
+        LIMIT $1 OFFSET $2`,
         [limit, skip]
       );
       return result.rows;

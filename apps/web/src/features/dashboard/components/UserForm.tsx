@@ -44,7 +44,6 @@ export const UserForm = ({
   })
 
   const handleSubmit = async (data: UserFormData) => {
-    // Add default values for required fields that are not in the form
     const submitData: CreateUserData = {
       ...data,
       phone: '+1 234 567 8900',
