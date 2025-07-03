@@ -28,7 +28,7 @@ const checkDatabaseConnection = async () => {
         const dbVersion = result.rows[0].version;
         console.log('✅ Database connection successful');
         console.log(`📅 Database time: ${dbTime}`);
-        console.log(`🗄️ Database version: ${dbVersion.split(' ').slice(0, 2).join(' ')}`);
+        console.log(`🗄️` + ` Database version: ${dbVersion.split(' ').slice(0, 2).join(' ')}`);
         client.release();
         return true;
     }
