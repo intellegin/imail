@@ -31,7 +31,7 @@ export const checkDatabaseConnection = async (): Promise<boolean> => {
 
     console.log('✅ Database connection successful');
     console.log(`📅 Database time: ${dbTime}`);
-    console.log(`🗄️ Database version: ${dbVersion.split(' ').slice(0, 2).join(' ')}`);
+    console.log(`🗄️ ` + `Database version: ${dbVersion.split(' ').slice(0, 2).join(' ')}`);
 
     client.release();
     return true;
@@ -57,7 +57,6 @@ export const query = async (text: string, params?: any[]): Promise<QueryResult> 
   return res;
 };
 
-// Function to execute queries with user context for RLS
 export const queryWithUser = async (auth0Id: string, text: string, params?: any[]): Promise<QueryResult> => {
   const client = await pool.connect();
 
@@ -67,7 +66,6 @@ export const queryWithUser = async (auth0Id: string, text: string, params?: any[
     // Set the current user context for RLS policies
     await client.query('SELECT set_config($1, $2, true)', ['app.current_user_auth0_id', auth0Id]);
 
-    // Execute the actual query
     const res = await client.query(text, params);
     const duration = Date.now() - start;
 

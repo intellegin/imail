@@ -173,11 +173,11 @@ export class UserService {
           }
         } else if (isNewUser) {
           console.log(
-            `ℹ️ New user ${user.email} already has ${userRoles.rows[0]?.role_count} role(s) assigned`
+            `ℹ️  New user ${user.email} already has ${userRoles.rows[0]?.role_count} role(s) assigned`
           );
         } else {
           console.log(
-            `ℹ️ Existing user ${user.email} has ${userRoles.rows[0]?.role_count} role(s), no action needed`
+            `ℹ️  Existing user ${user.email} has ${userRoles.rows[0]?.role_count} role(s), no action needed`
           );
         }
       } catch (roleError) {
