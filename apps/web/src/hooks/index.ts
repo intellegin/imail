@@ -1,2 +1,3 @@
-export { useMediaQuery } from './useMediaQuery'
-export { useAuthenticatedApi } from './useAuthenticatedApi'
+export * from './useAuthenticatedApi'
+export * from './useMediaQuery'
+export * from './useUserProfile'

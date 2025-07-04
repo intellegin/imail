@@ -14,12 +14,12 @@ try {
   }
 }
 
+import { checkDatabaseConnection } from '@imail/shared';
 import dotenv from 'dotenv';
 import express from 'express';
 
 import authRoutes from './api/auth/routes/authRoutes';
 import userRoutes from './api/user/routes/userRoutes';
-import { checkDatabaseConnection } from '@imail/shared';
 import { authMiddleware } from './middleware/auth';
 import { corsMiddleware } from './middleware/cors';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';

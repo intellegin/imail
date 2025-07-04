@@ -17,7 +17,7 @@ export const clearStorage = () => {
     const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
   })
-  
+
   if ('indexedDB' in window) {
     indexedDB.databases().then(databases => {
       databases.forEach(db => {
@@ -27,4 +27,10 @@ export const clearStorage = () => {
       })
     })
   }
+}
+
+export const nullsToUndefined = <T extends object>(obj: T): T => {
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [k, v === null ? undefined : v])
+  ) as T
 }

@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 
 import { createColumns } from '../components/Columns'
 import { UserForm } from '../components/UserForm'
+import { fetchRoles } from '../lib/roles'
 
 import { DataTable, LoadingScreen } from '@/components/atoms'
 import { Button } from '@/components/ui/button'
@@ -16,15 +17,16 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi'
 import { api, User, CreateUserData } from '@/lib/api'
 import type { UsersResponse } from '@/lib/types/user'
+import { nullsToUndefined } from '@/lib/utils'
 
 const DashboardPage = () => {
   const [users, setUsers] = useState<User[]>([])
@@ -34,6 +36,9 @@ const DashboardPage = () => {
   const [isCreating, setIsCreating] = useState(false)
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [roles, setRoles] = useState<{ id: string; name: string }[]>([])
+  const isAdmin = true
+  const [editingUser, setEditingUser] = useState<User | null>(null)
 
   const { authenticatedApiRequest } = useAuthenticatedApi()
 
@@ -58,6 +63,14 @@ const DashboardPage = () => {
 
     fetchUsers()
   }, [authenticatedApiRequest])
+
+  useEffect(() => {
+    if (showAddForm) {
+      fetchRoles()
+        .then(setRoles)
+        .catch(() => setRoles([]))
+    }
+  }, [showAddForm])
 
   const handleDeleteUser = async (user: User) => {
     setUserToDelete(user)
@@ -84,10 +97,8 @@ const DashboardPage = () => {
   }
 
   const handleEditUser = (user: User) => {
-    toast.info(`Editing user: ${user.given_name} ${user.family_name}`, {
-      description: `User ID: ${user.id}`,
-      duration: 3000,
-    })
+    setEditingUser(user)
+    setShowAddForm(true)
   }
 
   const handleAddUser = async (userData: CreateUserData) => {
@@ -97,9 +108,28 @@ const DashboardPage = () => {
       setUsers(prev => [...prev, newUser])
       toast.success('User created successfully')
       setShowAddForm(false)
+      setEditingUser(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       toast.error(`Failed to create user: ${errorMessage}`)
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  const handleUpdateUser = async (userData: CreateUserData) => {
+    setIsCreating(true)
+    try {
+      const updatedUser = await api.updateUser(editingUser!.id, userData)
+      setUsers(prev =>
+        prev.map(u => (u.id === updatedUser.id ? updatedUser : u))
+      )
+      toast.success('User updated successfully')
+      setShowAddForm(false)
+      setEditingUser(null)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      toast.error(`Failed to update user: ${errorMessage}`)
     } finally {
       setIsCreating(false)
     }
@@ -110,7 +140,10 @@ const DashboardPage = () => {
     window.location.reload()
   }
 
-  const columns = createColumns(handleEditUser, handleDeleteUser)
+  const columns = createColumns(
+    isAdmin ? handleEditUser : undefined,
+    isAdmin ? handleDeleteUser : undefined
+  )
 
   if (error) {
     return (
@@ -143,23 +176,40 @@ const DashboardPage = () => {
             Manage your team members and their access to the dashboard.
           </p>
         </div>
-        <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
-          <DialogTrigger asChild>
+        <Sheet
+          open={showAddForm}
+          onOpenChange={open => {
+            setShowAddForm(open)
+            if (!open) setEditingUser(null)
+          }}
+        >
+          <SheetTrigger asChild>
             <Button size="lg" className="font-semibold">
               + Add User
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
-            </DialogHeader>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[400px] sm:w-[540px]">
             <UserForm
-              onSubmit={handleAddUser}
-              onCancel={() => setShowAddForm(false)}
+              onSubmit={editingUser ? handleUpdateUser : handleAddUser}
+              onCancel={() => {
+                setShowAddForm(false)
+                setEditingUser(null)
+              }}
               loading={isCreating}
+              roles={roles}
+              user={editingUser
+                ? (nullsToUndefined(editingUser) as {
+                    given_name?: string
+                    family_name?: string
+                    email?: string
+                    role_id?: string
+                    roles?: { id: string }[]
+                  })
+                : undefined}
+              title={editingUser ? 'Edit User' : 'Add New User'}
             />
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       </div>
 
       <Card className="w-full shadow-md rounded-xl bg-card">

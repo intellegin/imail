@@ -1,7 +1,8 @@
 import { query, queryWithUser, queryAsSystem } from '@imail/shared';
-import { RBACService } from '../../auth/services/rbacService';
+
 import { ROLES } from '../../../types/rbac';
 import { User, UpsertUserData } from '../../../types/user';
+import { RBACService } from '../../auth/services/rbacService';
 
 export class UserService {
   static async getAllUsers(limit = 30, skip = 0): Promise<User[]> {
