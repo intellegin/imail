@@ -9,7 +9,7 @@ export const lastNameSchema = z
 export const emailSchema = z
   .string()
   .email('Please enter a valid email address')
-export const roleSchema = z.enum(['admin', 'moderator', 'user'])
+export const roleSchema = z.string()
 
 export const userFormSchema = z.object({
   firstName: firstNameSchema,

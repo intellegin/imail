@@ -1,7 +1,8 @@
 import { query, queryWithUser, queryAsSystem } from '@imail/shared';
-import { RBACService } from '../../auth/services/rbacService';
+
 import { ROLES } from '../../../types/rbac';
 import { User, UpsertUserData } from '../../../types/user';
+import { RBACService } from '../../auth/services/rbacService';
 
 export class UserService {
   static async getAllUsers(limit = 30, skip = 0): Promise<User[]> {
@@ -173,11 +174,11 @@ export class UserService {
           }
         } else if (isNewUser) {
           console.log(
-            `ℹ️ New user ${user.email} already has ${userRoles.rows[0]?.role_count} role(s) assigned`
+            `ℹ️  New user ${user.email} already has ${userRoles.rows[0]?.role_count} role(s) assigned`
           );
         } else {
           console.log(
-            `ℹ️ Existing user ${user.email} has ${userRoles.rows[0]?.role_count} role(s), no action needed`
+            `ℹ️  Existing user ${user.email} has ${userRoles.rows[0]?.role_count} role(s), no action needed`
           );
         }
       } catch (roleError) {

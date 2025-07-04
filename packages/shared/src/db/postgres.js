@@ -28,7 +28,7 @@ const checkDatabaseConnection = async () => {
         const dbVersion = result.rows[0].version;
         console.log('✅ Database connection successful');
         console.log(`📅 Database time: ${dbTime}`);
-        console.log(`🗄️ Database version: ${dbVersion.split(' ').slice(0, 2).join(' ')}`);
+        console.log(`🗄️` + ` Database version: ${dbVersion.split(' ').slice(0, 2).join(' ')}`);
         client.release();
         return true;
     }
@@ -57,9 +57,7 @@ const queryWithUser = async (auth0Id, text, params) => {
     const client = await pool.connect();
     try {
         const start = Date.now();
-        // Set the current user context for RLS policies
         await client.query('SELECT set_config($1, $2, true)', ['app.current_user_auth0_id', auth0Id]);
-        // Execute the actual query
         const res = await client.query(text, params);
         const duration = Date.now() - start;
         if (process.env.NODE_ENV === 'development') {
@@ -104,7 +102,6 @@ const queryAsSystem = async (text, params) => {
         const start = Date.now();
         // Set system context to bypass RLS policies
         await client.query('SELECT set_config($1, $2, true)', ['app.system_context', 'true']);
-        // Execute the actual query
         const res = await client.query(text, params);
         const duration = Date.now() - start;
         if (process.env.NODE_ENV === 'development') {

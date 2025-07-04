@@ -85,3 +85,13 @@ export function isAdminRole(roleName: string): boolean {
 export function getAllRoleConfigs(): RoleConfig[] {
   return [...ROLE_CONFIGS]
 }
+
+export async function fetchRoles() {
+  const res = await fetch('/api/auth/roles')
+  if (!res.ok) throw new Error('Failed to fetch roles')
+  const data = await res.json()
+  return (data.data || []).map((role: { id: string; name: string }) => ({
+    id: role.id,
+    name: role.name,
+  }))
+}

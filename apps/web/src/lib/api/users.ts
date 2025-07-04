@@ -1,4 +1,9 @@
-import type { User, UsersResponse, CreateUserData } from '../types/user'
+import type {
+  User,
+  UsersResponse,
+  CreateUserData,
+  UserProfileResponse,
+} from '../types/user'
 
 import { apiRequest } from './client'
 
@@ -11,6 +16,9 @@ export const usersApi = {
     ),
 
   getUser: (id: number) => apiRequest<User>(`/users/${id}`),
+
+  getUserProfile: (accessToken?: string) =>
+    apiRequest<UserProfileResponse>('/auth/profile', {}, accessToken),
 
   createUser: (userData: CreateUserData) =>
     apiRequest<User>('/users/add', {

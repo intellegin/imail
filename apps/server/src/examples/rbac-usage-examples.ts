@@ -8,12 +8,12 @@
 
 import { Router } from 'express';
 
+import { RBACService } from '../api/auth/services/rbacService';
 import {
   requirePermission,
   requireRole,
   attachUserPermissions,
 } from '../middleware/rbac';
-import { RBACService } from '../api/auth/services/rbacService';
 import { ROLES, PERMISSIONS } from '../types/rbac';
 
 const router: Router = Router();
