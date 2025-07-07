@@ -1,28 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 
-import { createColumns } from '../components/Columns'
-import { UserForm } from '../components/UserForm'
+import {
+  createColumns,
+  DeleteUserDialog,
+  ErrorCard,
+  UserManagementHeader,
+} from '../components'
 import { fetchRoles } from '../lib/roles'
 
 import { DataTable, LoadingScreen } from '@/components/atoms'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Card, CardContent } from '@/components/ui/card'
 import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi'
 import { api, User, CreateUserData } from '@/lib/api'
 import type { UsersResponse } from '@/lib/types/user'
@@ -37,32 +25,32 @@ const DashboardPage = () => {
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [roles, setRoles] = useState<{ id: string; name: string }[]>([])
-  const isAdmin = true
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
   const { authenticatedApiRequest } = useAuthenticatedApi()
+  const isAdmin = true
+
+  const fetchUsers = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await authenticatedApiRequest<UsersResponse>(
+        '/users?limit=30&skip=0'
+      )
+      setUsers(response.users)
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to fetch users'
+      setError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }, [authenticatedApiRequest])
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await authenticatedApiRequest<UsersResponse>(
-          '/users?limit=30&skip=0'
-        )
-        setUsers(response.users)
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Failed to fetch users'
-        setError(errorMessage)
-        toast.error(errorMessage)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchUsers()
-  }, [authenticatedApiRequest])
+  }, [fetchUsers])
 
   useEffect(() => {
     if (showAddForm) {
@@ -72,12 +60,12 @@ const DashboardPage = () => {
     }
   }, [showAddForm])
 
-  const handleDeleteUser = async (user: User) => {
+  const handleDeleteUser = useCallback((user: User) => {
     setUserToDelete(user)
     setShowDeleteDialog(true)
-  }
+  }, [])
 
-  const confirmDelete = async () => {
+  const confirmDelete = useCallback(async () => {
     if (!userToDelete) return
 
     try {
@@ -94,14 +82,14 @@ const DashboardPage = () => {
       setShowDeleteDialog(false)
       setUserToDelete(null)
     }
-  }
+  }, [userToDelete])
 
-  const handleEditUser = (user: User) => {
+  const handleEditUser = useCallback((user: User) => {
     setEditingUser(user)
     setShowAddForm(true)
-  }
+  }, [])
 
-  const handleAddUser = async (userData: CreateUserData) => {
+  const handleAddUser = useCallback(async (userData: CreateUserData) => {
     setIsCreating(true)
     try {
       const newUser = await api.createUser(userData)
@@ -115,30 +103,39 @@ const DashboardPage = () => {
     } finally {
       setIsCreating(false)
     }
-  }
+  }, [])
 
-  const handleUpdateUser = async (userData: CreateUserData) => {
-    setIsCreating(true)
-    try {
-      const updatedUser = await api.updateUser(editingUser!.id, userData)
-      setUsers(prev =>
-        prev.map(u => (u.id === updatedUser.id ? updatedUser : u))
-      )
-      toast.success('User updated successfully')
-      setShowAddForm(false)
-      setEditingUser(null)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      toast.error(`Failed to update user: ${errorMessage}`)
-    } finally {
-      setIsCreating(false)
-    }
-  }
+  const handleUpdateUser = useCallback(
+    async (userData: CreateUserData) => {
+      setIsCreating(true)
+      try {
+        const updatedUser = await api.updateUser(editingUser!.id, userData)
+        setUsers(prev =>
+          prev.map(u => (u.id === updatedUser.id ? updatedUser : u))
+        )
+        toast.success('User updated successfully')
+        setShowAddForm(false)
+        setEditingUser(null)
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error'
+        toast.error(`Failed to update user: ${errorMessage}`)
+      } finally {
+        setIsCreating(false)
+      }
+    },
+    [editingUser]
+  )
 
-  const retryFetch = () => {
+  const handleCancel = useCallback(() => {
+    setShowAddForm(false)
+    setEditingUser(null)
+  }, [])
+
+  const retryFetch = useCallback(() => {
     setError(null)
     window.location.reload()
-  }
+  }, [])
 
   const columns = createColumns(
     isAdmin ? handleEditUser : undefined,
@@ -147,70 +144,37 @@ const DashboardPage = () => {
 
   if (error) {
     return (
-      <div className="w-full mt-10 px-2 md:px-4 mx-auto">
-        <Card className="border-destructive w-full">
-          <CardHeader>
-            <CardTitle className="text-destructive">
-              Error Loading Users
-            </CardTitle>
-            <CardDescription>
-              There was a problem loading the user data. Please try again.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <Button onClick={retryFetch} variant="outline">
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <ErrorCard
+        title="Error Loading Users"
+        description="There was a problem loading the user data. Please try again."
+        error={error}
+        onRetry={retryFetch}
+      />
     )
   }
 
   return (
     <div className="w-full px-2 md:px-4 py-6">
-      <div className="flex items-center justify-between mb-4 w-full">
-        <div>
-          <p className="text-muted-foreground text-base">
-            Manage your team members and their access to the dashboard.
-          </p>
-        </div>
-        <Sheet
-          open={showAddForm}
-          onOpenChange={open => {
-            setShowAddForm(open)
-            if (!open) setEditingUser(null)
-          }}
-        >
-          <SheetTrigger asChild>
-            <Button size="lg" className="font-semibold">
-              + Add User
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-            <UserForm
-              onSubmit={editingUser ? handleUpdateUser : handleAddUser}
-              onCancel={() => {
-                setShowAddForm(false)
-                setEditingUser(null)
-              }}
-              loading={isCreating}
-              roles={roles}
-              user={editingUser
-                ? (nullsToUndefined(editingUser) as {
-                    given_name?: string
-                    family_name?: string
-                    email?: string
-                    role_id?: string
-                    roles?: { id: string }[]
-                  })
-                : undefined}
-              title={editingUser ? 'Edit User' : 'Add New User'}
-            />
-          </SheetContent>
-        </Sheet>
-      </div>
+      <UserManagementHeader
+        showAddForm={showAddForm}
+        onShowAddFormChange={setShowAddForm}
+        onAddUser={handleAddUser}
+        onUpdateUser={handleUpdateUser}
+        isCreating={isCreating}
+        roles={roles}
+        editingUser={
+          editingUser
+            ? (nullsToUndefined(editingUser) as {
+                given_name?: string
+                family_name?: string
+                email?: string
+                role_id?: string
+                roles?: { id: string }[]
+              })
+            : undefined
+        }
+        onCancel={handleCancel}
+      />
 
       <Card className="w-full shadow-md rounded-xl bg-card">
         <CardContent className="px-5">
@@ -229,31 +193,12 @@ const DashboardPage = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete User</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{' '}
-              <strong>
-                {userToDelete?.given_name} {userToDelete?.family_name}
-              </strong>
-              ? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteUserDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        user={userToDelete}
+        onConfirm={confirmDelete}
+      />
     </div>
   )
 }

@@ -20,6 +20,7 @@ const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
 const routeConfig = [
   { path: '/', component: '/dashboard', header: 'Dashboard' },
   { path: '/dashboard', component: '/dashboard', header: 'Dashboard' },
+  { path: '/agents', component: '/agents', header: 'Agents' },
   { path: '/users', component: '/users', header: 'User Management' },
   { path: '/inbox', component: '/inbox', header: 'Inbox' },
   { path: '/drafts', component: '/drafts', header: 'Drafts' },

@@ -15,27 +15,21 @@ const PrivateWrapper: React.FC<PrivateWrapperProps> = ({
   header,
 }) => {
   const isMobile = useMediaQuery('(max-width: 768px)')
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(true)
 
   return (
     <div className="flex h-screen bg-background">
+      <RoleBasedSidebar onCollapsedChange={setIsCollapsed} />
       <div
         className={cn(
-          'flex flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out',
+          'flex flex-1 flex-col h-full overflow-hidden transition-all duration-300 ease-in-out',
           !isMobile && (isCollapsed ? 'ml-20' : 'ml-64')
         )}
       >
-        <RoleBasedSidebar onCollapsedChange={setIsCollapsed} />
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-6">
-            {header && (
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold tracking-tight">{header}</h1>
-              </div>
-            )}
-            {children}
-          </div>
-        </main>
+        {header && (
+          <h1 className="text-2xl font-bold tracking-tight p-4">{header}</h1>
+        )}
+        <main className="flex-1 min-h-0 overflow-y-auto">{children}</main>
       </div>
     </div>
   )

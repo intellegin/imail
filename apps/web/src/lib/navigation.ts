@@ -14,6 +14,7 @@ import {
   Tag,
   Inbox,
   Home,
+  Bot,
 } from 'lucide-react'
 import type { SVGProps } from 'react'
 
@@ -30,6 +31,7 @@ export interface NavigationItem {
 export const adminNavigation: NavigationItem[] = [
   { name: 'Dashboard', icon: Home, path: '/' },
   { name: 'Users', icon: Users, path: '/users' },
+  { name: 'Agents', icon: Bot, path: '/agents' },
 ]
 
 export const userNavigation: NavigationItem[] = [
@@ -39,6 +41,7 @@ export const userNavigation: NavigationItem[] = [
   { name: 'Junk', icon: Archive, path: '/junk', count: 23 },
   { name: 'Trash', icon: Trash2, path: '/trash' },
   { name: 'Archive', icon: FolderOpen, path: '/archive' },
+  { name: 'Agents', icon: Bot, path: '/agents' },
 ]
 
 export const categoryNavigation: NavigationItem[] = [

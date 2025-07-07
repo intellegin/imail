@@ -17,6 +17,7 @@ export const protectedPaths = [
   '/forums',
   '/shopping',
   '/promotions',
+  '/agents',
 ]
 
 export const protectedRouteComponents: Record<
@@ -24,6 +25,7 @@ export const protectedRouteComponents: Record<
   React.LazyExoticComponent<React.ComponentType<any>>
 > = {
   '/dashboard': lazy(() => import('@/features/dashboard/routes/DashboardPage')),
+  '/agents': lazy(() => import('@/features/agents/routes/AgentsPage')),
   '/settings': lazy(() => import('@/features/settings/routes/SettingsPage')),
   '/help': lazy(() => import('@/features/help/routes/HelpPage')),
   '/users': lazy(() => import('@/features/dashboard/routes/DashboardPage')),
