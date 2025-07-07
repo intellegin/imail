@@ -16,7 +16,6 @@ import {
 
 const router: Router = Router();
 
-// Apply authentication and attach permissions to all routes
 router.use(requiresAuth);
 router.use(attachUserPermissions);
 

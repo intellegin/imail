@@ -13,6 +13,7 @@ import { DataTable, LoadingScreen } from '@/components/atoms'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi'
 import { api, User, CreateUserData } from '@/lib/api'
+import { API_ENDPOINTS, HTTP_METHODS, API_CONFIG } from '@/lib/constants/api'
 import type { UsersResponse } from '@/lib/types/user'
 import { nullsToUndefined } from '@/lib/utils'
 
@@ -35,7 +36,10 @@ const DashboardPage = () => {
     setError(null)
     try {
       const response = await authenticatedApiRequest<UsersResponse>(
-        '/users?limit=30&skip=0'
+        API_ENDPOINTS.USERS.LIST(
+          API_CONFIG.DEFAULT_LIMIT,
+          API_CONFIG.DEFAULT_SKIP
+        )
       )
       setUsers(response.users)
     } catch (err) {
@@ -89,27 +93,43 @@ const DashboardPage = () => {
     setShowAddForm(true)
   }, [])
 
-  const handleAddUser = useCallback(async (userData: CreateUserData) => {
-    setIsCreating(true)
-    try {
-      const newUser = await api.createUser(userData)
-      setUsers(prev => [...prev, newUser])
-      toast.success('User created successfully')
-      setShowAddForm(false)
-      setEditingUser(null)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-      toast.error(`Failed to create user: ${errorMessage}`)
-    } finally {
-      setIsCreating(false)
-    }
-  }, [])
+  const handleAddUser = useCallback(
+    async (userData: CreateUserData) => {
+      setIsCreating(true)
+      try {
+        const newUser = await authenticatedApiRequest<User>(
+          API_ENDPOINTS.USERS.CREATE,
+          {
+            method: HTTP_METHODS.POST,
+            body: JSON.stringify(userData),
+          }
+        )
+        setUsers(prev => [...prev, newUser])
+        toast.success('User created successfully')
+        setShowAddForm(false)
+        setEditingUser(null)
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error'
+        toast.error(`Failed to create user: ${errorMessage}`)
+      } finally {
+        setIsCreating(false)
+      }
+    },
+    [authenticatedApiRequest]
+  )
 
   const handleUpdateUser = useCallback(
     async (userData: CreateUserData) => {
       setIsCreating(true)
       try {
-        const updatedUser = await api.updateUser(editingUser!.id, userData)
+        const updatedUser = await authenticatedApiRequest<User>(
+          API_ENDPOINTS.USERS.BY_ID(editingUser!.id),
+          {
+            method: HTTP_METHODS.PUT,
+            body: JSON.stringify(userData),
+          }
+        )
         setUsers(prev =>
           prev.map(u => (u.id === updatedUser.id ? updatedUser : u))
         )
@@ -124,7 +144,7 @@ const DashboardPage = () => {
         setIsCreating(false)
       }
     },
-    [editingUser]
+    [editingUser, authenticatedApiRequest]
   )
 
   const handleCancel = useCallback(() => {

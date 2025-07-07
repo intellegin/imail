@@ -1,15 +1,16 @@
 export const API_ENDPOINTS = {
   AUTH: {
-    VERIFY: '/api/auth/verify',
-    LOGOUT: '/api/auth/logout',
+    VERIFY: '/auth/verify',
+    LOGOUT: '/auth/logout',
     LOGIN: '/login',
-    PROFILE: '/api/auth/profile',
-    ME: '/api/auth/me',
+    PROFILE: '/auth/profile',
+    ME: '/auth/me',
+    ROLES: '/auth/roles',
   },
   USERS: {
     BASE: '/users',
     BY_ID: (id: number) => `/users/${id}`,
-    CREATE: '/users/add',
+    CREATE: '/users',
     LIST: (limit = 30, skip = 0) => `/users?limit=${limit}&skip=${skip}`,
   },
 } as const

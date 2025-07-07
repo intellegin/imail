@@ -1,4 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { RefreshCw } from 'lucide-react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 
 import {
@@ -16,13 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useAuth } from '@/contexts/AuthContext'
 import { CreateUserData } from '@/lib/api'
 
 interface UserFormProps {
   onSubmit: (data: CreateUserData) => Promise<void>
   onCancel: () => void
   loading?: boolean
-  roles: { id: string; name: string }[]
   user?: {
     given_name?: string
     family_name?: string
@@ -39,10 +41,18 @@ export const UserForm = ({
   onSubmit,
   onCancel,
   loading = false,
-  roles,
   user,
   title = 'Add New User',
 }: UserFormProps) => {
+  const { roles = { success: false, data: [] } } = useAuth()
+  const rolesData =
+    (roles.data as { data?: { id: string; name: string }[] })?.data || []
+  const rolesLoading = rolesData.length === 0
+
+  console.log('UserForm roles:', roles)
+  console.log('rolesData:', rolesData)
+  console.log('rolesLoading:', rolesLoading)
+
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
     defaultValues: user
@@ -50,26 +60,40 @@ export const UserForm = ({
           firstName: user.given_name || '',
           lastName: user.family_name || '',
           email: user.email || '',
-          role:
-            (user.roles && user.roles[0]?.id) ||
-            user.role_id ||
-            roles[0]?.id ||
-            '',
+          password: '',
+          role: (user.roles && user.roles[0]?.id) || user.role_id || '',
         }
       : {
           firstName: '',
           lastName: '',
           email: '',
-          role: roles[0]?.id || '',
+          password: '',
+          role: '',
         },
   })
+
+  useEffect(() => {
+    if (rolesData.length > 0 && !form.getValues('role')) {
+      form.setValue('role', rolesData[0].id)
+    }
+  }, [rolesData, form])
+
+  const generatePassword = () => {
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+    let password = ''
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    form.setValue('password', password)
+  }
 
   const handleSubmit = async (data: UserFormData) => {
     const submitData: CreateUserData = {
       ...data,
       phone: '+1 234 567 8900',
       username: `${data.firstName}${data.lastName}`.toLowerCase(),
-      password: 'defaultPassword123',
+      password: data.password,
     }
     await onSubmit(submitData)
     form.reset()
@@ -139,18 +163,51 @@ export const UserForm = ({
         </div>
 
         <div className="flex flex-col gap-2">
+          <Label htmlFor="password">Temporary Password</Label>
+          <div className="flex gap-2">
+            <Input
+              id="password"
+              type="text"
+              {...form.register('password')}
+              placeholder="Enter temporary password"
+              className={
+                form.formState.errors.password ? 'border-destructive' : ''
+              }
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={generatePassword}
+              className="px-3"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+          {form.formState.errors.password && (
+            <span className="text-xs text-destructive">
+              {form.formState.errors.password.message}
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
           <Label htmlFor="role">Role</Label>
           <Select
             value={form.watch('role')}
             onValueChange={value => form.setValue('role', value)}
+            disabled={rolesLoading}
           >
             <SelectTrigger
               className={form.formState.errors.role ? 'border-destructive' : ''}
             >
-              <SelectValue placeholder="Select a role" />
+              <SelectValue
+                placeholder={
+                  rolesLoading ? 'Loading roles...' : 'Select a role'
+                }
+              />
             </SelectTrigger>
             <SelectContent>
-              {roles.map(role => (
+              {rolesData.map((role: { id: string; name: string }) => (
                 <SelectItem key={role.id} value={role.id}>
                   {role.name}
                 </SelectItem>

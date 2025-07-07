@@ -8,10 +8,13 @@ import React, {
   useState,
 } from 'react'
 
+import { usersApi } from '@/lib/api/users'
+
 interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   user: User | null
+  roles: { success: boolean; data: { id: string; name: string }[] }
   loginWithRedirect: () => Promise<void>
   logout: () => Promise<void>
   getAccessTokenSilently: () => Promise<string>
@@ -47,6 +50,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
+  const [roles, setRoles] = useState<{ id: string; name: string }[]>([])
 
   useEffect(() => {
     const initAuth = async () => {
@@ -80,6 +84,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 'Content-Type': 'application/json',
               },
             })
+
+            const rolesData = await usersApi.getRoles(token)
+            setRoles(rolesData)
           } catch (error) {
             console.error('Failed to verify user with backend:', error)
           }
@@ -108,9 +115,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = useCallback(async () => {
     setIsAuthenticated(false)
     setUser(null)
-
+    setRoles([])
     localStorage.clear()
-
     await auth0Client.logout()
   }, [])
 
@@ -126,6 +132,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       isAuthenticated,
       isLoading,
       user,
+      roles,
       loginWithRedirect,
       logout,
       getAccessTokenSilently,
@@ -134,6 +141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       isAuthenticated,
       isLoading,
       user,
+      roles,
       loginWithRedirect,
       logout,
       getAccessTokenSilently,
