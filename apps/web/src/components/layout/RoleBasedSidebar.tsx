@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, LogOut, Menu, Shield } from 'lucide-react'
+import { ChevronLeft, LogOut, Menu, Shield } from 'lucide-react'
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
@@ -131,7 +131,7 @@ const DesktopSidebar = ({
     )}
   >
     <div className="flex flex-col h-full">
-      <header className="flex items-center justify-between px-4 py-4 border-b">
+      <header className="flex items-center justify-between px-4 border-b h-12">
         {!isCollapsed && (
           <span className="text-lg font-semibold text-foreground">iMAIL</span>
         )}
@@ -139,7 +139,7 @@ const DesktopSidebar = ({
           <TooltipTrigger asChild>
             <Button size="icon" variant="ghost" onClick={onToggle}>
               {isCollapsed ? (
-                <Menu className="h-6 w-6" />
+                <Menu className="h-4 w-4" />
               ) : (
                 <ChevronLeft className="w-6 h-6" />
               )}
@@ -150,20 +150,6 @@ const DesktopSidebar = ({
           </TooltipContent>
         </Tooltip>
       </header>
-
-      <Button
-        type="button"
-        onClick={onToggle}
-        className="absolute top-1/2 -right-2 z-20 -translate-y-1/2 bg-card border border-l border-border rounded-r-md shadow px-1 py-4 flex items-center justify-center hover:bg-accent transition-colors"
-        style={{ width: '16px', height: '48px' }}
-        aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-      >
-        {isCollapsed ? (
-          <ChevronRight className="w-4 h-4" />
-        ) : (
-          <ChevronLeft className="w-4 h-4" />
-        )}
-      </Button>
 
       <nav className="flex-1 py-4">
         <div className="space-y-4">
@@ -226,12 +212,12 @@ const MobileTopBar = ({
   handleLogout,
   roles,
 }: MobileTopBarProps) => (
-  <header className="sticky top-0 z-50 flex items-center justify-center px-0 py-2 bg-card border-b relative h-14">
+  <header className="sticky top-0 z-50 flex items-center justify-center px-0 py-2 bg-card border-b h-14">
     <div className="absolute left-2 top-1/2 -translate-y-1/2">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon">
-            <Menu className="h-6 w-6" />
+            <Menu className="h-4 w-4" />
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="p-0 w-64 max-w-full">
@@ -306,7 +292,7 @@ export const RoleBasedSidebar: React.FC<SidebarProps> = ({
   const { userProfile, isLoading, roles } = useUserProfile()
   const { logout } = useAuth()
   const isMobile = useMediaQuery('(max-width: 768px)')
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(true)
 
   const navigation = getNavigationForRoles(roles)
 
